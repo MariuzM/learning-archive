@@ -1,0 +1,116 @@
+# ===== OS =====
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# ===== Editors / IDEs =====
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+*.swp
+*.swo
+*.sw?
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*~
+
+# ===== Logs =====
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+bun-debug.log*
+
+# ===== Env / secrets =====
+.env
+.env.*
+!.env.example
+!.env.sample
+*.pem
+
+# ===== Node / JS / TS =====
+node_modules/
+dist/
+dist-ssr/
+build/
+out/
+.cache/
+.parcel-cache/
+.turbo/
+coverage/
+*.tsbuildinfo
+*.local
+
+# ===== Next.js =====
+.next/
+.vercel/
+
+# ===== Expo / React Native =====
+.expo/
+.expo-shared/
+*.jks
+*.p8
+*.p12
+*.mobileprovision
+*.orig.*
+
+# ===== Bun =====
+.bun/
+
+# ===== Rust =====
+target/
+**/*.rs.bk
+
+# ===== Zig =====
+zig-out/
+.zig-cache/
+zig-cache/
+
+# ===== Jai =====
+.build/
+*.dSYM/
+
+# ===== Go =====
+*.exe
+*.exe~
+*.test
+*.out
+vendor/
+
+# ===== Python =====
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# ===== C / C++ / native =====
+*.o
+*.obj
+*.a
+*.so
+*.dylib
+*.lib
+
+# ===== WASM build artifacts =====
+*.wasm.map
+
+# ===== Misc =====
+.DS_Store
+tmp/
+temp/
