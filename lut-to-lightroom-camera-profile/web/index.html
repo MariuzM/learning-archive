@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<title>LUT to Lightroom Profile</title>
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg: #1c1c1e; --card: #2c2c2e; --border: #3a3a3c; --text: #e8e8ea;
+    --subtext: #8e8e93; --field: #1c1c1e; --field-text: #e8e8ea;
+    --accent: #0a84ff; --accent-text: #fff;
+    --secondary: #3a3a3c; --secondary-text: #e8e8ea;
+    --path: #c7c7cc; --path-set: #e8e8ea;
+    --ok-bg: #16341e; --ok-border: #2c7a43;
+    --err-bg: #3a1d1d; --err-border: #a33;
+  }
+  @media (prefers-color-scheme: light) {
+    :root {
+      --bg: #ececec; --card: #fff; --border: #d2d2d7; --text: #1d1d1f;
+      --subtext: #6e6e73; --field: #fff; --field-text: #1d1d1f;
+      --accent: #007aff; --accent-text: #fff;
+      --secondary: #e3e3e8; --secondary-text: #1d1d1f;
+      --path: #6e6e73; --path-set: #1d1d1f;
+      --ok-bg: #e7f6ec; --ok-border: #34c759;
+      --err-bg: #fdeaea; --err-border: #ff453a;
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  html { background: var(--bg); }
+  body {
+    margin: 0; font: 13px/1.5 -apple-system, system-ui, sans-serif;
+    background: var(--bg); color: var(--text); padding: 22px;
+    -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
+    -webkit-user-select: none; user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    cursor: default; overflow-x: hidden; overscroll-behavior: none;
+  }
+  h1 { font-size: 17px; margin: 0 0 4px; }
+  p.sub { margin: 0 0 18px; color: var(--subtext); }
+  code { font-size: 12px; background: color-mix(in srgb, var(--text) 10%, transparent); padding: 1px 5px; border-radius: 5px; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 14px; }
+  label.row { display: block; margin-bottom: 14px; }
+  label.row:last-child { margin-bottom: 0; }
+  .lbl { display: block; font-weight: 600; margin-bottom: 6px; }
+  .hint { color: var(--subtext); font-weight: 400; }
+  .filebox { display: flex; gap: 8px; align-items: center; }
+  .path {
+    flex: 1; background: var(--field); border: 1px solid var(--border); border-radius: 8px;
+    padding: 8px 10px; min-height: 34px; color: var(--path); overflow: hidden;
+    text-overflow: ellipsis; white-space: nowrap; direction: rtl; text-align: left;
+    -webkit-user-select: text; user-select: text; cursor: text;
+  }
+  .path.set { color: var(--path-set); }
+  input[type=text], select {
+    width: 100%; background: var(--field); border: 1px solid var(--border); border-radius: 8px;
+    padding: 8px 10px; color: var(--field-text); font: inherit;
+    transition: border-color .12s ease, box-shadow .12s ease;
+  }
+  input[type=text] { -webkit-user-select: text; user-select: text; cursor: text; }
+  input[type=text]:focus, select:focus {
+    outline: none; border-color: var(--accent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 30%, transparent);
+  }
+  /* Native macOS popup-button look: blue chevron pill on the trailing edge. */
+  .select { position: relative; width: 100%; }
+  .select select {
+    appearance: none; -webkit-appearance: none;
+    padding-right: 38px; cursor: default; text-overflow: ellipsis;
+  }
+  .select::after {
+    content: ""; position: absolute; top: 4px; bottom: 4px; right: 4px; width: 22px;
+    border-radius: 5px; pointer-events: none;
+    background:
+      url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2016%2016'%20fill='none'%20stroke='%23fff'%20stroke-width='1.7'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='M4.5%206.5%208%203.5%2011.5%206.5M4.5%209.5%208%2012.5%2011.5%209.5'/%3E%3C/svg%3E")
+      center / 13px no-repeat,
+      var(--accent);
+  }
+  .select:has(select:active)::after { filter: brightness(.9); }
+  button {
+    background: var(--accent); color: var(--accent-text); border: 0; border-radius: 8px;
+    padding: 8px 14px; font: inherit; font-weight: 600; cursor: default;
+    transition: filter .1s ease;
+  }
+  button:active { filter: brightness(.88); }
+  button.secondary { background: var(--secondary); color: var(--secondary-text); }
+  button:disabled { opacity: .5; }
+  button:focus { outline: none; }
+  button:focus-visible {
+    outline: none; box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 45%, transparent);
+  }
+  .convert { width: 100%; padding: 12px; font-size: 15px; margin-top: 4px; }
+  #status { margin-top: 14px; padding: 12px; border-radius: 10px; display: none; }
+  #status.ok { display: block; background: var(--ok-bg); border: 1px solid var(--ok-border); }
+  #status.err { display: block; background: var(--err-bg); border: 1px solid var(--err-border); }
+  #status .msg { white-space: pre-wrap; }
+  #status .pathline {
+    font-size: 12px; color: var(--path); margin-top: 6px; word-break: break-all;
+    -webkit-user-select: text; user-select: text; cursor: text;
+  }
+  #status .statusbtns { margin-top: 12px; display: flex; gap: 8px; flex-wrap: wrap; }
+  #status .statusbtns button { padding: 7px 12px; font-size: 13px; }
+</style>
+</head>
+<body>
+  <h1>LUT &rarr; Lightroom Profile</h1>
+  <p class="sub">Turn a <code>.cube</code> LUT into a Lightroom creative profile (<code>.xmp</code>) — works on any camera.</p>
+
+  <div class="card">
+    <label class="row">
+      <span class="lbl">1 · LUT file <span class="hint">— a 3D .cube</span></span>
+      <div class="filebox">
+        <div class="path" id="lutPath">No file selected</div>
+        <button class="secondary" onclick="pickLut()">Choose…</button>
+      </div>
+    </label>
+
+    <label class="row">
+      <span class="lbl">LUT input encoding <span class="hint">— log LUTs (F-Log2, S-Log3…) need this</span></span>
+      <div class="select">
+        <select id="encoding">
+          <option value="auto">Auto-detect (recommended)</option>
+          <option value="display">Display / sRGB</option>
+          <option value="flog2">Fujifilm F-Log2</option>
+          <option value="flog">Fujifilm F-Log</option>
+          <option value="slog3">Sony S-Log3</option>
+          <option value="vlog">Panasonic V-Log</option>
+          <option value="logc3">ARRI LogC3</option>
+          <option value="rec709">Rec.709</option>
+          <option value="linear">Linear</option>
+        </select>
+      </div>
+    </label>
+
+    <label class="row">
+      <span class="lbl">2 · Output folder</span>
+      <div class="filebox">
+        <div class="path" id="outPath">No folder selected</div>
+        <button class="secondary" onclick="pickOut()">Choose…</button>
+      </div>
+    </label>
+  </div>
+
+  <div class="card">
+    <label class="row">
+      <span class="lbl">Profile name</span>
+      <input type="text" id="name" placeholder="e.g. Eterna Classic Chrome" />
+    </label>
+    <label class="row">
+      <span class="lbl">Group <span class="hint">— the heading it appears under in Lightroom's Profile Browser</span></span>
+      <input type="text" id="group" value="LUT Profiles" />
+    </label>
+  </div>
+
+  <button class="convert" id="go" onclick="run()">Convert</button>
+  <div id="status"></div>
+
+<script>
+  // ---- native-feel guards: behave like an app window, not a web page ----
+  document.addEventListener("contextmenu", (e) => e.preventDefault());
+  document.addEventListener("dragstart", (e) => e.preventDefault());
+  window.addEventListener("dragover", (e) => e.preventDefault());
+  window.addEventListener("drop", (e) => e.preventDefault());
+  document.addEventListener("wheel", (e) => { if (e.ctrlKey) e.preventDefault(); }, { passive: false });
+  document.addEventListener("keydown", (e) => {
+    const k = e.key.toLowerCase();
+    if (e.metaKey && (k === "q" || k === "w")) { e.preventDefault(); window.quit && window.quit(); return; }
+    if (e.metaKey && (k === "r" || k === "=" || k === "+" || k === "-" || k === "0")) { e.preventDefault(); return; }
+    if (k === "enter") {
+      const el = document.activeElement, tag = el && el.tagName;
+      if (tag !== "BUTTON" && tag !== "SELECT") {
+        const go = document.getElementById("go");
+        if (go && !go.disabled) { e.preventDefault(); run(); }
+      }
+    }
+  });
+
+  const state = { lut: "", outDir: "" };
+  let lastResult = null, lastDir = null;
+
+  function setPath(id, value, fallback) {
+    const el = document.getElementById(id);
+    if (value) { el.textContent = value; el.classList.add("set"); }
+    else { el.textContent = fallback; el.classList.remove("set"); }
+  }
+  function esc(s) {
+    return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+  function show(cls, msg) {
+    const s = document.getElementById("status");
+    s.className = cls; s.innerHTML = '<div class="msg">' + esc(msg) + "</div>";
+  }
+  function showHTML(cls, html) {
+    const s = document.getElementById("status");
+    s.className = cls; s.innerHTML = html;
+  }
+
+  async function pickLut() {
+    const p = await window.pickFile("lut");
+    state.lut = p;
+    setPath("lutPath", p, "No file selected");
+  }
+  async function pickOut() {
+    const p = await window.pickFolder();
+    state.outDir = p;
+    setPath("outPath", p, "No folder selected");
+  }
+
+  async function run() {
+    const go = document.getElementById("go");
+    go.disabled = true; go.textContent = "Converting…";
+    show("", "");
+    try {
+      const res = await window.convert({
+        lut: state.lut,
+        outDir: state.outDir,
+        name: document.getElementById("name").value.trim(),
+        group: document.getElementById("group").value.trim() || "LUT Profiles",
+        input: document.getElementById("encoding").value,
+      });
+      if (res.ok) {
+        lastResult = res;
+        let html = '<div class="msg">✓ Profile written.</div>';
+        if (res.xmp) html += '<div class="pathline">' + esc(res.xmp) + "</div>";
+        html += '<div class="statusbtns"><button onclick="install()">Import to Lightroom</button></div>';
+        showHTML("ok", html);
+      } else {
+        show("err", "✗ " + res.msg);
+      }
+    } catch (e) {
+      show("err", "✗ " + e);
+    } finally {
+      go.disabled = false; go.textContent = "Convert";
+    }
+  }
+
+  async function install() {
+    if (!lastResult || !lastResult.xmp) return;
+    let r;
+    try { r = await window.installProfile(lastResult.xmp); }
+    catch (e) { show("err", "✗ " + e); return; }
+    if (r.ok) {
+      lastDir = r.dir || null;
+      let html = '<div class="msg">✓ ' + esc(r.msg) + "</div>";
+      if (lastDir) html += '<div class="statusbtns"><button class="secondary" onclick="reveal()">Open Lightroom folder</button></div>';
+      showHTML("ok", html);
+    } else {
+      show("err", "✗ " + r.msg);
+    }
+  }
+  function reveal() { if (lastDir) window.revealPath(lastDir); }
+</script>
+</body>
+</html>

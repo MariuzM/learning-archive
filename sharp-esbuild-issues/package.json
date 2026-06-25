@@ -1,0 +1,23 @@
+{
+  "name": "server",
+  "version": "1.0.0",
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "scripts": {
+    "dev": "tsx watch src/app.ts",
+    "build": "tsc -build",
+    "bundle": "node esbuild.config.mjs"
+  },
+  "dependencies": {
+    "dotenv": "^16.3.1",
+    "fastify": "^4.22.0",
+    "sharp": "^0.32.5"
+  },
+  "devDependencies": {
+    "@types/node": "^20.5.7",
+    "esbuild": "^0.19.2",
+    "tsx": "^3.12.7",
+    "typescript": "^5.2.2"
+  }
+}

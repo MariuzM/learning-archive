@@ -1,0 +1,7 @@
+.DS_Store
+.cache/
+.vscode/
+.zig-cache/
+Thumbs.db
+output.pdf
+zig-out/

@@ -1,0 +1,38 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700&display=swap');
+
+:root {
+  --background: #e5e5e5;
+  --dark: #222222;
+  --medium: #555555;
+  --video: #37cda8;
+  --animation: #3b4ce4;
+  --infographic: #de5114;
+  --webinar: #ffbd13;
+  --light: #cccccc;
+  --white: #ffffff;
+  --black: #000000;
+  --radius: 4px;
+}
+
+:export {
+  video: var(--video);
+  animation: var(--animation);
+  infographic: var(--infographic);
+  webinar: var(--webinar);
+  white: var(--white);
+  black: var(--black);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Montserrat', sans-serif;
+  text-decoration: none;
+  outline: none;
+}
+
+body {
+  background-color: var(--background);
+  padding: 5%;
+}

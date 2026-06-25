@@ -1,0 +1,24 @@
+FROM node:20-slim
+
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
+
+RUN corepack enable
+
+RUN ls -la
+
+COPY . /app
+WORKDIR /app
+
+RUN pnpm install
+
+RUN ls -la
+RUN cd node_modules && cd shared && ls -la
+
+RUN pnpm run build
+
+# RUN bun install
+# RUN bun run build
+
+EXPOSE 3000
+CMD pnpm run start

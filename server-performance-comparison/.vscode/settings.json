@@ -1,0 +1,24 @@
+{
+  "restoreTerminals.terminals": [
+    {
+      "splitTerminals": [
+        {
+          "name": "bun-elysia",
+          "commands": ["cd bun-elysia"]
+        },
+        {
+          "name": "bun-fastify",
+          "commands": ["cd bun-fastify"]
+        },
+        {
+          "name": "go-fiber",
+          "commands": ["cd go-fiber"]
+        },
+        {
+          "name": "node-fastify",
+          "commands": ["cd node-fastify"]
+        }
+      ]
+    }
+  ]
+}

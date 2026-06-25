@@ -1,0 +1,11 @@
+$color-LightGreen: #379137;
+$color-Random: #1fe7dd;
+
+:root {
+  --color-none: red;
+}
+
+:export {
+  color: $color-Random;
+  color2: #85a885;
+}

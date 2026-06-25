@@ -1,0 +1,96 @@
+{
+  "name": "jai-formatter",
+  "displayName": "Jai Formatter",
+  "description": "Code formatter for the Jai programming language",
+  "version": "0.0.5",
+  "publisher": "local",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.75.0"
+  },
+  "categories": [
+    "Formatters",
+    "Programming Languages"
+  ],
+  "keywords": [
+    "jai",
+    "formatter",
+    "format"
+  ],
+  "main": "./out/extension.js",
+  "activationEvents": [
+    "onLanguage:jai"
+  ],
+  "contributes": {
+    "languages": [
+      {
+        "id": "jai",
+        "aliases": [
+          "Jai",
+          "jai"
+        ],
+        "extensions": [
+          ".jai"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "configuration": {
+      "title": "Jai Formatter",
+      "properties": {
+        "jai.format.indentCaseContents": {
+          "type": "boolean",
+          "default": true,
+          "description": "Indent statements that follow a `case` label inside an if/switch block."
+        },
+        "jai.format.spaceAfterComma": {
+          "type": "boolean",
+          "default": true,
+          "description": "Normalize comma spacing in code: exactly one space after a comma and none before it (and before semicolons)."
+        },
+        "jai.format.maxBlankLines": {
+          "type": "integer",
+          "default": 1,
+          "minimum": 0,
+          "description": "Maximum number of consecutive blank lines to keep. Blank lines inside string literals and comments are never collapsed."
+        },
+        "jai.format.insertFinalNewline": {
+          "type": "boolean",
+          "default": true,
+          "description": "Ensure the file ends with exactly one trailing newline."
+        },
+        "jai.format.operatorSpacing": {
+          "type": "boolean",
+          "default": true,
+          "description": "Put single spaces around operators in code (:= :: == != <= >= += -= *= /= && || -> << >> = < >). Ambiguous *, +, - (pointers/unary) are left untouched."
+        },
+        "jai.format.splitInlineCaseBodies": {
+          "type": "boolean",
+          "default": true,
+          "description": "Move a statement written on the same line as a lone `case` label onto its own indented line. Runs of 2+ inline cases are aligned instead when `alignCaseBodies` is on. Whole-document formatting only."
+        },
+        "jai.format.alignCaseBodies": {
+          "type": "boolean",
+          "default": true,
+          "description": "Keep runs of consecutive `case LABEL; statement;` lines on one line and align the statement column. Takes precedence over splitting for such runs. Whole-document formatting only."
+        },
+        "jai.format.alignDeclarations": {
+          "type": "boolean",
+          "default": true,
+          "description": "Align the colons (and value `=`) of consecutive declarations at the same indentation. Applies to whole-document formatting only."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "test": "bun test",
+    "vscode:prepublish": "tsc -p ./"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/vscode": "^1.75.0",
+    "typescript": "^5.4.0"
+  }
+}

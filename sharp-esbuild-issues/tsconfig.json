@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+    "alwaysStrict": true,
+    "esModuleInterop": true,
+    "module": "CommonJS",
+    // "moduleResolution": "NodeNext",
+    "noImplicitAny": true,
+    "outDir": "./build",
+    "removeComments": true,
+    "rootDir": "./src",
+    "sourceMap": false,
+    "strict": true,
+    "target": "ESNext",
+    "skipLibCheck": true
+  },
+  "include": ["./src/**/*", "./src/**/*.ts", "env.d.ts"],
+  "exclude": ["node_modules"]
+}

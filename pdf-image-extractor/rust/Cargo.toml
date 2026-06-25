@@ -1,0 +1,11 @@
+[package]
+name = "pdf-image-counter"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "pdf-image-counter"
+path = "src/main.rs"
+
+[profile.release]
+opt-level = 3

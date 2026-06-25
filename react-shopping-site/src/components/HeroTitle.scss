@@ -1,0 +1,82 @@
+.HeroTitle {
+  // position: relative;
+  // background-color: #4444;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  // top: 0;
+  // align-items: center;
+  // justify-content: center;
+  // margin: 0 auto;
+  // padding: 0;
+  // top: 0%;
+  // left: 50%;
+  // transform: translate(-50%, -50%);
+  margin-top: -80px;
+  height: 100vh;
+  // width: 100vw;
+  z-index: -1;
+  // img {
+  //   position: absolute;
+  //   background-repeat: no-repeat;
+  //   background-position: center;
+  //   background-size: cover;
+  //   width: 100%;
+  //   // position: fixed;
+  //   z-index: -1;
+  // }
+  p {
+    color: #ffffff;
+    font-family: Roboto;
+    font-size: 7em;
+    font-weight: 700;
+    // background: #7a9614;
+    span + span {
+      margin-left: 0.3em;
+    }
+    span {
+      display: inline-block;
+      position: relative;
+      // transform-style: preserve-3d;
+      // perspective: 500;
+
+      // ::before,
+      // ::after {
+      //   display: none;
+      //   position: absolute;
+      //   top: 0;
+      //   left: -1px;
+      //   transform-origin: left top;
+      //   transition: all ease-out 0.3s;
+      //   content: attr(data-text);
+      // }
+      &::before,
+      &::after {
+        display: block;
+        position: absolute;
+        top: 0;
+        left: -1px;
+        transform-origin: left top;
+        transition: all ease-out 0.3s;
+        content: attr(data-text);
+      }
+      &::before {
+        z-index: 1;
+        color: #00000033;
+        transform: scale(1.04, 1) skew(0deg, 10deg);
+      }
+      &::after {
+        color: #3949ab;
+        text-shadow: -1px 0 1px #3949ab, 1px 0 1px #000000cc;
+        transform: rotateY(-40deg);
+        z-index: 2;
+      }
+      &:hover::before {
+        transform: scale(1, 1) skew(0deg, 0deg);
+      }
+      &:hover::after {
+        transform: rotateY(-10deg);
+      }
+    }
+  }
+}

@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Zig + WebAssembly</title>
+    <style>
+      body {
+        font-family: system-ui, sans-serif;
+        max-width: 640px;
+        margin: 4rem auto;
+        padding: 0 1rem;
+        line-height: 1.6;
+        color: #1a1a1a;
+      }
+      h1 { font-size: 1.5rem; }
+      .card {
+        border: 1px solid #e2e2e2;
+        border-radius: 8px;
+        padding: 1rem 1.25rem;
+        margin: 1rem 0;
+      }
+      input { padding: 0.4rem; font-size: 1rem; width: 6rem; }
+      button {
+        padding: 0.45rem 0.9rem;
+        font-size: 1rem;
+        cursor: pointer;
+        border: 1px solid #888;
+        border-radius: 6px;
+        background: #fafafa;
+      }
+      output { font-weight: 600; }
+      code { background: #f3f3f3; padding: 0.1rem 0.3rem; border-radius: 4px; }
+      pre {
+        background: #f3f3f3;
+        padding: 0.75rem;
+        border-radius: 6px;
+        white-space: pre-wrap;
+        word-break: break-word;
+        margin: 0.75rem 0 0;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Zig compiled to WebAssembly</h1>
+    <p>The math below runs inside a <code>.wasm</code> module built from Zig.</p>
+
+    <div class="card">
+      <label>add(<input id="a" type="number" value="2" /> , <input id="b" type="number" value="3" />)</label>
+      <button id="addBtn">Run</button>
+      <p>Result: <output id="addOut">—</output></p>
+    </div>
+
+    <div class="card">
+      <label>fibonacci(<input id="n" type="number" value="20" />)</label>
+      <button id="fibBtn">Run</button>
+      <p>Result: <output id="fibOut">—</output></p>
+    </div>
+
+    <div class="card">
+      <label>greet(<input id="g" type="number" value="21" />)</label>
+      <button id="greetBtn">Run</button>
+      <p><output id="greetOut">—</output></p>
+    </div>
+
+    <div class="card">
+      <label>Device report from Zig:</label>
+      <button id="deviceBtn">Detect</button>
+      <pre id="deviceOut">—</pre>
+    </div>
+
+    <script type="module">
+      const getGpu = () => {
+        try {
+          const canvas = document.createElement("canvas");
+          const gl =
+            canvas.getContext("webgl") ||
+            canvas.getContext("experimental-webgl");
+          if (!gl) return "";
+          const ext = gl.getExtension("WEBGL_debug_renderer_info");
+          return ext ? gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) : "";
+        } catch {
+          return "";
+        }
+      };
+
+      // A stable, random per-device id. Generated once and stored, so two
+      // identical devices (even the same iPhone model) get different ids. This
+      // is assigned, not derived from device properties — that's the only way
+      // to distinguish identical hardware.
+      const randomUuid = () => {
+        if (crypto.randomUUID) return crypto.randomUUID();
+        const b = crypto.getRandomValues(new Uint8Array(16));
+        b[6] = (b[6] & 0x0f) | 0x40;
+        b[8] = (b[8] & 0x3f) | 0x80;
+        const h = [...b].map((x) => x.toString(16).padStart(2, "0"));
+        return `${h[0]}${h[1]}${h[2]}${h[3]}-${h[4]}${h[5]}-${h[6]}${h[7]}-${h[8]}${h[9]}-${h[10]}${h[11]}${h[12]}${h[13]}${h[14]}${h[15]}`;
+      };
+
+      const getDeviceId = () => {
+        let id = localStorage.getItem("device-id");
+        if (!id) {
+          id = randomUuid();
+          localStorage.setItem("device-id", id);
+        }
+        return id;
+      };
+
+      // Imports Zig calls out to. The string getters encode the value directly
+      // into wasm memory at the pointer Zig passes in.
+      let instance;
+      const writeInto = (ptr, max, str) => {
+        const bytes = new TextEncoder().encode(str);
+        const n = Math.min(bytes.length, max);
+        new Uint8Array(instance.exports.memory.buffer, ptr, n).set(
+          bytes.subarray(0, n),
+        );
+        return n;
+      };
+
+      const importObject = {
+        env: {
+          jsUserAgent: (ptr, max) => writeInto(ptr, max, navigator.userAgent),
+          jsGpu: (ptr, max) => writeInto(ptr, max, getGpu()),
+          jsCores: () => navigator.hardwareConcurrency || 0,
+          jsDeviceMemory: () => navigator.deviceMemory || 0,
+          jsMaxTouchPoints: () => navigator.maxTouchPoints || 0,
+          jsScreenWidth: () => screen.width,
+          jsScreenHeight: () => screen.height,
+          jsDevicePixelRatio: () => window.devicePixelRatio || 1,
+          jsDeviceId: (ptr, max) => writeInto(ptr, max, getDeviceId()),
+        },
+      };
+
+      ({ instance } = await WebAssembly.instantiateStreaming(
+        fetch("main.wasm"),
+        importObject,
+      ));
+      const wasm = instance.exports;
+
+      document.getElementById("addBtn").onclick = () => {
+        const a = +document.getElementById("a").value;
+        const b = +document.getElementById("b").value;
+        document.getElementById("addOut").textContent = wasm.add(a, b);
+      };
+
+      document.getElementById("fibBtn").onclick = () => {
+        const n = +document.getElementById("n").value;
+        document.getElementById("fibOut").textContent =
+          wasm.fibonacci(n).toString();
+      };
+
+      document.getElementById("greetBtn").onclick = () => {
+        const value = +document.getElementById("g").value;
+        const len = wasm.greet(value);
+        const ptr = wasm.greetingPtr();
+        const bytes = new Uint8Array(wasm.memory.buffer, ptr, Number(len));
+        document.getElementById("greetOut").textContent =
+          new TextDecoder().decode(bytes);
+      };
+
+      const detectDevice = () => {
+        try {
+          const len = wasm.detectDevice();
+          const ptr = wasm.devicePtr();
+          const bytes = new Uint8Array(wasm.memory.buffer, ptr, Number(len));
+          document.getElementById("deviceOut").textContent =
+            new TextDecoder().decode(bytes);
+        } catch (e) {
+          document.getElementById("deviceOut").textContent = "Error: " + e.message;
+        }
+      };
+
+      document.getElementById("deviceBtn").onclick = detectDevice;
+      detectDevice();
+    </script>
+  </body>
+</html>

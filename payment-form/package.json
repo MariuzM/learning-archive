@@ -1,0 +1,44 @@
+{
+	"name": "payment-form",
+	"version": "0.0.0",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"dev": "vite --port=3000",
+		"build": "vite build",
+		"start": "vite preview --port ${PORT} --host 0.0.0.0"
+	},
+	"dependencies": {
+		"@hookform/resolvers": "^4.1.3",
+		"@tailwindcss/vite": "^4.0.17",
+		"@tanstack/react-query": "^5.69.0",
+		"@tanstack/react-router": "^1.114.29",
+		"@tanstack/router-devtools": "^1.114.29",
+		"antd": "^5.24.5",
+		"axios": "^1.8.4",
+		"i18next": "^24.2.3",
+		"i18next-browser-languagedetector": "^8.0.4",
+		"lodash": "^4.17.21",
+		"react": "^19.0.0",
+		"react-dom": "^19.0.0",
+		"react-hook-form": "^7.54.2",
+		"react-i18next": "^15.4.1",
+		"react-toastify": "^11.0.5",
+		"zod": "^3.24.2",
+		"zustand": "^5.0.3"
+	},
+	"devDependencies": {
+		"@eslint/js": "^9.23.0",
+		"@tanstack/router-plugin": "^1.114.29",
+		"@types/eslint__js": "^9.14.0",
+		"@types/react": "^19.0.12",
+		"@types/react-dom": "^19.0.4",
+		"@vitejs/plugin-react": "^4.3.4",
+		"eslint": "^9.23.0",
+		"eslint-plugin-react-hooks": "^5.2.0",
+		"eslint-plugin-react-refresh": "^0.4.19",
+		"typescript": "^5.8.2",
+		"typescript-eslint": "^8.28.0",
+		"vite": "^6.2.3"
+	}
+}

@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="1920" height="1062" viewBox="0 0 1920 1062">
+  <defs>
+    <linearGradient id="linear-gradient" x1="0.514" y1="-0.051" x2="0.509" y2="0.651" gradientUnits="objectBoundingBox">
+      <stop offset="0" stop-opacity="0"/>
+      <stop offset="1" stop-color="#5f159f"/>
+    </linearGradient>
+    <clipPath id="clip-Background">
+      <rect width="1920" height="1062"/>
+    </clipPath>
+  </defs>
+  <g id="Background" clip-path="url(#clip-Background)">
+    <rect width="1920" height="1062"/>
+    <rect id="Glow" width="1920" height="856" transform="translate(0 -14)" fill="url(#linear-gradient)"/>
+  </g>
+</svg>

@@ -1,0 +1,12 @@
+.vscode/**
+.vscode-test/**
+src/**
+test/**
+samples/**
+**/*.ts
+**/*.map
+.gitignore
+tsconfig.json
+bun.lock
+bun.lockb
+.editorconfig

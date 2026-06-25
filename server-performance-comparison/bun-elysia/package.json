@@ -1,0 +1,15 @@
+{
+  "name": "bun-elysia",
+  "version": "1.0.50",
+  "scripts": {
+    "d": "bun run --watch src/app.ts",
+    "st": "bun run ./src/app.ts"
+  },
+  "dependencies": {
+    "elysia": "latest"
+  },
+  "devDependencies": {
+    "bun-types": "latest"
+  },
+  "module": "src/app.js"
+}

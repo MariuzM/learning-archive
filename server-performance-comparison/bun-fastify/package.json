@@ -1,0 +1,19 @@
+{
+  "name": "node-fastify",
+  "version": "1.0.0",
+  "license": "ISC",
+  "type": "commonjs",
+  "scripts": {
+    "d": "bun run --watch src/app.ts",
+    "st": "bun run ./src/app.ts"
+  },
+  "dependencies": {
+    "dotenv": "^16.3.1",
+    "fastify": "^4.24.3"
+  },
+  "devDependencies": {
+    "@types/node": "^20.9.3",
+    "tsx": "^4.1.4",
+    "typescript": "^5.3.2"
+  }
+}

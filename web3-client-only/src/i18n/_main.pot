@@ -1,0 +1,72 @@
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=utf-8\n"
+"POT-Creation-Date: Mon Dec 26 2022 12:22:04 GMT+0700 (Indochina Time)\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: src/data/dataRoutes.ts:40
+msgid "Home"
+msgstr ""
+
+#: src/data/dataRoutes.ts:44
+msgid "Exchange"
+msgstr ""
+
+#: src/data/dataRoutes.ts:48
+msgid "Serve"
+msgstr ""
+
+#: src/data/dataRoutes.ts:52
+msgid "Mine"
+msgstr ""
+
+#: src/data/dataRoutes.ts:59
+msgid "How do I cash out my earnings?"
+msgstr ""
+
+#: src/data/dataRoutes.ts:60
+#: src/data/dataRoutes.ts:65
+#: src/data/dataRoutes.ts:70
+msgid "Test"
+msgstr ""
+
+#: src/data/dataRoutes.ts:64
+msgid "What benefits will I gets?"
+msgstr ""
+
+#: src/data/dataRoutes.ts:69
+msgid "How can I participate?"
+msgstr ""
+
+#: src/views/Home.tsx:75
+msgid "Participate"
+msgstr ""
+
+#: src/views/Home.tsx:91
+msgid "Address"
+msgstr ""
+
+#: src/views/Home.tsx:114
+msgid "PROFIT POOL"
+msgstr ""
+
+#: src/views/Home.tsx:128
+msgid "Mining income"
+msgstr ""
+
+#: src/views/Home.tsx:142
+msgid "UTKS Price"
+msgstr ""
+
+#: src/views/Home.tsx:160
+msgid "Wallet balance"
+msgstr ""
+
+#: src/views/Home.tsx:169
+msgid "Staking APY"
+msgstr ""
+
+#: src/views/Home.tsx:322
+msgid "Share Now"
+msgstr ""

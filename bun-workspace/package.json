@@ -1,0 +1,13 @@
+{
+  "name": "bun-workspace",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "app1": "cd apps/app1 && bun d",
+    "app2": "cd apps/app2 && bun d"
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ]
+}

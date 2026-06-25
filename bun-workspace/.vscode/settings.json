@@ -1,0 +1,24 @@
+{
+  "restoreTerminals.terminals": [
+    {
+      "splitTerminals": [
+        {
+          "name": "root",
+          "commands": ["clear"]
+        },
+        {
+          "name": "app1",
+          "commands": ["cd apps && cd app1 && clear"]
+        },
+        {
+          "name": "app2",
+          "commands": ["cd apps && cd app2 && clear"]
+        },
+        {
+          "name": "shared",
+          "commands": ["cd packages && cd shared && clear"]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="1920" height="1080" viewBox="0 0 1920 1080">
+  <defs>
+    <style>
+      .cls-1 {
+        clip-path: url(#clip-Background);
+      }
+
+      .cls-2 {
+        fill: url(#linear-gradient);
+      }
+
+      .cls-3 {
+        opacity: 0.313;
+      }
+    </style>
+    <linearGradient id="linear-gradient" x1="0.51" y1="-0.055" x2="0.51" y2="0.881" gradientUnits="objectBoundingBox">
+      <stop offset="0" stop-opacity="0"/>
+      <stop offset="1" stop-color="#5f159f"/>
+    </linearGradient>
+    <clipPath id="clip-Background">
+      <rect width="1920" height="1080"/>
+    </clipPath>
+  </defs>
+  <g id="Background" class="cls-1">
+    <rect width="1920" height="1080"/>
+    <rect id="Glow" class="cls-2" width="1920" height="696" transform="translate(0 -14)"/>
+    <path id="Mountains2" class="cls-3" d="M2185.677,518.617,2121.04,471.3,2056.4,497.6l-61.944-70.289-51,10.676-67.923-29.75-88.458,72.626L1707.091,353.9,1584.83,394.783,1419.1,343.029l-106.024,51.754L1171.86,285.974,927.338,343.029,821.379,285.974l-114.11,95.351L625.762,353.9,538.821,454.422l-81.507-59.639-78.79,43.2-84.224-43.2L211.547,471.3l-42.176-33.312L103.818,471.3,67.372,381.325l-52.43,99.536L0,623.22l2204.285-34.868Z" transform="translate(-102.663 110)"/>
+    <path id="Mountains1" d="M16.519,544.4,73.9,492.924h57.385l45.43-36.237,62.167,20.633,64.558-20.633,66.949,11.069,64.558-72.705,102.814,12.93L647.752,304.968l141.071,62.366L977.715,225.02l119.552,120.794L1247.9,290.045l86.077,105.006,80.348-90.084,72.678,117.359,60.256-27.276,76.033,50.022,74.122-50.022,50.212,50.022,64.558-22.746,47.821,45.43,52.6-22.683,31.083,58.255,13.266,154.862L0,620.26Z" transform="translate(-18 123)"/>
+  </g>
+</svg>

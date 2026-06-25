@@ -1,0 +1,20 @@
+{
+  "restoreTerminals.terminals": [
+    {
+      "splitTerminals": [
+        {
+          "name": "ai-bun",
+          "commands": ["cd ai-bun && clear"]
+        },
+        {
+          "name": "ai-next",
+          "commands": ["cd ai-next && clear"]
+        },
+        {
+          "name": "ai-react",
+          "commands": ["cd ai-react && clear"]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,47 @@
+{
+  "compilerOptions": {
+    "alwaysStrict": true,
+    "esModuleInterop": true,
+    "module": "CommonJS",
+    // "moduleResolution": "NodeNext",
+    "noImplicitAny": true,
+    "outDir": "./build",
+    "removeComments": true,
+    // "rootDir": "./src",
+    "sourceMap": false,
+    "strict": true,
+    "target": "ESNext",
+    "skipLibCheck": true,
+
+    "moduleResolution": "node",
+
+    "noUncheckedIndexedAccess": true
+  },
+  "include": ["src", "src/enums"],
+  "exclude": ["node_modules"]
+}
+
+// {
+//   "compilerOptions": {
+//     "lib": ["ESNext"],
+//     "module": "esnext",
+//     "target": "esnext",
+//     "moduleResolution": "bundler",
+//     "moduleDetection": "force",
+//     "allowImportingTsExtensions": true,
+//     "noEmit": true,
+//     "composite": true,
+//     "strict": true,
+//     "downlevelIteration": true,
+//     "skipLibCheck": true,
+//     "jsx": "react-jsx",
+//     "allowSyntheticDefaultImports": true,
+//     "forceConsistentCasingInFileNames": true,
+//     "allowJs": true,
+//     "types": [
+//       "bun-types" // add Bun global
+//     ]
+//   },
+//   "include": ["./src/**/*", "./src/**/*.ts", "env.d.ts"],
+//   "exclude": ["node_modules"]
+// }

@@ -1,0 +1,13 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "C/C++ Runner: Debug Session",
+      "type": "lldb",
+      "request": "launch",
+      "args": [],
+      "cwd": "/Volumes/Media/Dev_Projects/Projects/test__cpp_rectangle",
+      "program": "/Volumes/Media/Dev_Projects/Projects/test__cpp_rectangle/build/Debug/outDebug"
+    }
+  ]
+}

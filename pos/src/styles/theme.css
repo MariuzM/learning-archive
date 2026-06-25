@@ -1,0 +1,116 @@
+:root {
+  --green-light: #2e823e;
+  --green: #40c057;
+  --green-dark: #2e823e;
+
+  --red: #fa5252;
+
+  --orange-light: #ffe8c9;
+  --orange: #fab152;
+  --orange-dark: #d9800b;
+
+  --green-light: #d1f9d891;
+  --grey-light: #f5f5f5;
+  --grey-darker: #dedede;
+  --grey-darker1: #898989;
+  --grey-darker3: #5e5e5e;
+
+  --bg-color: var(--grey-light);
+
+  /* --border-color: var(--grey-darker); */
+  --border-color: #e9ecef;
+  --border: 1px solid var(--border-color);
+  --border-radius: 5px;
+
+  --box-shadow: 0 1px 3px #0000000d, #0000000d 0px 10px 15px -5px, #0000000a 0px 7px 7px -5px;
+
+  --transition: 100ms;
+
+  background-color: var(--grey-light);
+  /* font-family: Inter, Avenir, Helvetica, Arial, sans-serif; */
+  /* font-size: 16px; */
+  /* font-weight: 400; */
+  /* line-height: 0; */
+}
+
+body {
+  line-height: 1 !important;
+}
+
+/* -------------------------------------------------- */
+
+.flex-row {
+  display: flex;
+  flex-direction: row;
+}
+
+.flex-col {
+  display: flex;
+  flex-direction: column;
+}
+
+.items-center {
+  align-items: center;
+}
+
+/* -------------------------------------------------- */
+
+.border-top {
+  border-top: var(--border);
+}
+
+.border-right {
+  border-right: var(--border);
+}
+
+.border-bottom {
+  border-bottom: var(--border);
+}
+
+.border-left {
+  border-left: var(--border);
+}
+
+/* -------------------------------------------------- */
+
+.border-radius {
+  border-radius: var(--border-radius);
+}
+
+/* -------------------------------------------------- */
+
+.block-padding {
+  padding: 10px 15px;
+}
+
+.w-full {
+  width: 100%;
+}
+
+/* -------------------------------------------------- */
+
+.scroller {
+  overflow-y: scroll;
+  scrollbar-color: #0a4c95 #c2d2e4;
+}
+
+.scroller::-webkit-scrollbar {
+  width: 15px;
+  /* height: 10px; */
+}
+
+/* .scroller::-webkit-scrollbar-track-piece {
+  background-color: #c2d2e4;
+} */
+
+/* .scroller::-webkit-scrollbar-thumb:vertical {
+  background-color: #0a4c95;
+} */
+
+.scroller::-webkit-scrollbar-thumb {
+  box-shadow: inset 0 0 0 10px #0a4c95;
+  border-left: solid 3px transparent;
+  border-right: solid 3px transparent;
+}
+
+/* -------------------------------------------------- */

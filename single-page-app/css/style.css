@@ -1,0 +1,276 @@
+html,
+body,
+div,
+span,
+applet,
+object,
+iframe,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p,
+blockquote,
+pre,
+a,
+abbr,
+acronym,
+address,
+big,
+cite,
+code,
+del,
+dfn,
+em,
+img,
+ins,
+kbd,
+q,
+s,
+samp,
+small,
+strike,
+strong,
+sub,
+sup,
+tt,
+var,
+b,
+u,
+i,
+center,
+dl,
+dt,
+dd,
+ol,
+ul,
+li,
+fieldset,
+form,
+label,
+legend,
+table,
+caption,
+tbody,
+tfoot,
+thead,
+tr,
+th,
+td,
+article,
+aside,
+canvas,
+details,
+embed,
+figure,
+figcaption,
+footer,
+header,
+hgroup,
+menu,
+nav,
+output,
+ruby,
+section,
+summary,
+time,
+mark,
+audio,
+video {
+  border: 0;
+  font-size: 100%;
+  font: inherit;
+  vertical-align: baseline;
+}
+
+article,
+aside,
+details,
+figcaption,
+figure,
+footer,
+header,
+hgroup,
+menu,
+nav,
+section {
+  display: block;
+}
+
+body {
+  line-height: 1;
+}
+
+ol,
+ul {
+  list-style: none;
+}
+
+blockquote,
+q {
+  quotes: none;
+}
+
+blockquote:before,
+blockquote:after,
+q:before,
+q:after {
+  content: '';
+  content: none;
+}
+
+table {
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  -webkit-box-sizing: border-box;
+          box-sizing: border-box;
+  text-decoration: none !important;
+}
+
+body {
+  font-family: Arial, Helvetica, sans-serif;
+  height: 100vh;
+  width: 400px;
+}
+
+body .block {
+  width: 400px;
+  left: 50%;
+  background: linear-gradient(184deg, #a123b3 0%, #f9bb20 100%);
+  overflow: hidden;
+  background-size: cover;
+  background-position: center;
+}
+
+body .block header {
+  height: 327px;
+}
+
+body .block header .hero {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  text-align: center;
+  z-index: -1;
+}
+
+body .block header .hero img {
+  position: relative;
+  border-radius: 10px;
+  top: 50%;
+  left: 40%;
+  height: auto;
+  width: 80%;
+  -webkit-box-shadow: 0px 0px 20px 2px #00000050;
+          box-shadow: 0px 0px 20px 2px #00000050;
+  -webkit-transform: translate(-50%, -50%);
+          transform: translate(-50%, -50%);
+}
+
+body .block section {
+  position: relative;
+  width: 100%;
+  height: 700px;
+}
+
+body .block section .d-wrap {
+  position: relative;
+  left: 50%;
+  -webkit-transform: translateX(-50%);
+          transform: translateX(-50%);
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-orient: horizontal;
+  -webkit-box-direction: normal;
+      -ms-flex-direction: row;
+          flex-direction: row;
+  width: 300px;
+  -webkit-box-pack: justify;
+      -ms-flex-pack: justify;
+          justify-content: space-between;
+  text-align: center;
+  padding: 20px 0 0 0;
+}
+
+body .block section .d-wrap .detail {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-orient: vertical;
+  -webkit-box-direction: normal;
+      -ms-flex-direction: column;
+          flex-direction: column;
+  position: relative;
+}
+
+body .block section .d-wrap .detail .detail-title {
+  font-size: 12px;
+  color: #ededee;
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+body .block section .d-wrap .detail .detail-content {
+  font-size: 15px;
+}
+
+body .block section .d-wrap .sep {
+  background: #ededee;
+  width: 1px;
+}
+
+body .block section .g-wrap {
+  padding: 20px 0;
+}
+
+body .block section .g-wrap .title {
+  padding: 0 0 0 20px;
+}
+
+body .block section .g-wrap .gallery {
+  padding: 0 0 0 20px;
+  width: 100%;
+  height: 140px;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  overflow-x: scroll;
+  padding-right: 20px;
+  margin: 10px 0 0 0;
+}
+
+body .block section .g-wrap .gallery img {
+  height: 100px;
+  border-radius: 10px;
+  -webkit-box-shadow: 7px 7px 20px -5px #00000050;
+          box-shadow: 7px 7px 20px -5px #00000050;
+  margin-right: 10px;
+}
+
+body nav {
+  position: fixed;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  bottom: 0;
+  background-color: #42434c;
+  height: 50px;
+  width: 400px;
+  -webkit-box-shadow: 0 -5px 30px 0 #00000057;
+          box-shadow: 0 -5px 30px 0 #00000057;
+  -ms-flex-pack: distribute;
+      justify-content: space-around;
+  z-index: 9999;
+  -webkit-box-align: center;
+      -ms-flex-align: center;
+          align-items: center;
+}
+/*# sourceMappingURL=style.css.map */

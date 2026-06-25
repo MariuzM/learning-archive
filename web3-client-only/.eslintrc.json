@@ -1,0 +1,27 @@
+{
+  //   "parserOptions": {
+  //     "ecmaVersion": "latest"
+  //   }
+
+  "extends": [
+    "next/core-web-vitals"
+    // "eslint:recommended",
+    // "plugin:@typescript-eslint/eslint-recommended"
+    // "plugin:@typescript-eslint/recommended"
+    // "plugin:prettier/recommended"
+  ],
+
+  //   "plugins": ["simple-import-sort", "import", "prettier"],
+  "plugins": ["simple-import-sort", "import", "react-hooks"],
+
+  "rules": {
+    "simple-import-sort/imports": "error",
+    "simple-import-sort/exports": "error",
+    "import/first": "error",
+    "import/newline-after-import": "error",
+    "import/no-duplicates": "error",
+    "react-hooks/rules-of-hooks": "error",
+    "react-hooks/exhaustive-deps": "warn",
+    "react/display-name": "off"
+  }
+}

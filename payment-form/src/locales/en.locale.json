@@ -1,0 +1,46 @@
+{
+	"title": "Payment Form",
+	"senderAccount": {
+		"required": "Sender account is required",
+		"label": "Select Your Account to send money from",
+		"placeholder": "Select your account"
+	},
+	"senderAmount": {
+		"min": "Amount must be at least 0.01",
+		"max": "Amount must be less than ${0}",
+		"label": "Amount",
+		"placeholder": "Enter amount",
+		"insufficient": "Payee account has insufficient balance"
+	},
+	"receiverAccount": {
+		"required": "Receiver account is required",
+		"invalid": "Invalid IBAN format",
+		"label": "Receiver Account",
+		"placeholder": "Enter receiver account"
+	},
+	"receiverName": {
+		"required": "Receiver is required",
+		"max": "Receiver must be less than 70 characters",
+		"label": "Receiver Name",
+		"placeholder": "Enter receiver name"
+	},
+	"receiverAmount": {
+		"min": "Receiver amount must be at least 0.01",
+		"label": "Receiver Amount",
+		"placeholder": "Enter receiver amount"
+	},
+	"senderPurpose": {
+		"min": "Purpose must be at least 3 characters",
+		"max": "Purpose must be less than 135 characters",
+		"label": "Purpose",
+		"placeholder": "Enter purpose"
+	},
+	"transaction": {
+		"success": "Transaction successful"
+	},
+	"currentBalance": "Current Balance",
+	"afterBalance": "After Balance",
+	"buttons": {
+		"submit": "Submit"
+	}
+}

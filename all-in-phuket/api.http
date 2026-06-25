@@ -1,0 +1,66 @@
+# @URL = http://localhost:3000
+@URL = https://allinphuket.up.railway.app
+
+### -----------------------------------------------------------------
+
+GET {{URL}}/init
+
+### -----------------------------------------------------------------
+
+GET {{URL}}/get-options
+?service=real_estate
+&option=amenities
+
+### -----------------------------------------------------------------
+
+POST {{URL}}/add-data
+Content-Type: application/json
+
+{
+  "services": [
+    { "name": "activities" },
+    { "name": "diving" },
+    { "name": "house_services" },
+    { "name": "legal_visa_services" },
+    { "name": "online_schooling" },
+    { "name": "real_estate" },
+    { "name": "tours" },
+    { "name": "vehicles" },
+    { "name": "yacht_rental" }
+  ]
+}
+
+### -----------------------------------------------------------------
+
+GET {{URL}}/get-service-listings
+?service=real_estate
+
+### -----------------------------------------------------------------
+
+POST {{URL}}/add-service-listing
+?service=real_estate
+Content-Type: application/json
+
+{
+  "name": "Estate 1",
+  "images": [
+    "https://assets-global.website-files.com/633c47b0fc88c9155619ec57/64ba2871a6e0ed80048a4ca7_fa8d5dc9-ca2d-4861-861d-54c4a07e0cdc.JPG",
+    "https://uploads-ssl.webflow.com/633c47b0fc88c9155619ec57/64ba2884443f47cb051c6a36_4ef2c9ed-d757-4d52-b6b4-d6467a63aef4.JPG",
+    "https://uploads-ssl.webflow.com/633c47b0fc88c9155619ec57/64ba2884b03f44e6bd4de543_893d413f-c8fc-4f2c-b7fb-f0460513a857.JPG",
+    "https://uploads-ssl.webflow.com/633c47b0fc88c9155619ec57/64ba2884418a540ade61d316_339019c6-8921-4048-b70c-dcf78459c426.JPG"
+  ],
+  "location": "Kata",
+  "price": 12000,
+  "description": "Emerald Terrace Resort is a 5-minute drive from Patong Beach and Jungceylon Shopping Center. It offers an outdoor pool and free WiFi. The property provides free shuttle service to Patong Beach and Jungceylon Shopping Center.",
+
+  "amenities": ["pool", "security"],
+  "availabilityType": "short_term",
+  "contractDuration": "year",
+  "bedroomCount": 1,
+  "showerCount": 1,
+  "ownershipStatus": "freehold",
+  "propertyType": "apartment"
+}
+
+### -----------------------------------------------------------------
+

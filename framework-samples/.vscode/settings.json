@@ -1,0 +1,44 @@
+{
+	"restoreTerminals.terminals": [
+		{
+			"splitTerminals": [
+				{
+					"name": "next",
+					"commands": ["cd next && clear"]
+				},
+				{
+					"name": "nuxt",
+					"commands": ["cd nuxt && clear"]
+				},
+				{
+					"name": "remix",
+					"commands": ["cd remix && clear"]
+				},
+				{
+					"name": "solidstart",
+					"commands": ["cd solidstart && clear"]
+				},
+				{
+					"name": "sveltekit",
+					"commands": ["cd sveltekit && clear"]
+				}
+			]
+		},
+		{
+			"splitTerminals": [
+				{
+					"name": "react",
+					"commands": ["cd react && clear"]
+				},
+				{
+					"name": "react-rr7",
+					"commands": ["cd react-rr7 && clear"]
+				},
+				{
+					"name": "solid",
+					"commands": ["cd solid && clear"]
+				}
+			]
+		}
+	]
+}

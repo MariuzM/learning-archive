@@ -1,0 +1,80 @@
+{
+  "cli": {
+    "version": ">= 7.2.0",
+    "promptToConfigurePushNotifications": false,
+    "appVersionSource": "remote"
+  },
+
+  "build": {
+    "dev-sim": {
+      "channel": "development",
+      "distribution": "internal",
+      "developmentClient": true,
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://allinphuket.up.railway.app",
+        "EXPO_PUBLIC_IMAGES_URL": "https://xdaocaxazygrhqjiaclt.supabase.co/storage/v1/object/public/phuket-tourist/",
+        "EXPO_PUBLIC_MAP_API": "pk.MAPBOX_TOKEN_REDACTED"
+      },
+      "ios": {
+        "simulator": true
+      }
+    },
+    "development": {
+      "channel": "development",
+      "distribution": "internal",
+      "developmentClient": true,
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://allinphuket.up.railway.app",
+        "EXPO_PUBLIC_IMAGES_URL": "https://xdaocaxazygrhqjiaclt.supabase.co/storage/v1/object/public/phuket-tourist/",
+        "EXPO_PUBLIC_MAP_API": "pk.MAPBOX_TOKEN_REDACTED"
+      },
+      "ios": {
+        "buildConfiguration": "Debug"
+      }
+      // "android": {
+      //   "gradleCommand": ":app:assembleDebug"
+      // },
+    },
+    "preview-sim": {
+      "channel": "preview-sim",
+      "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://allinphuket.up.railway.app",
+        "EXPO_PUBLIC_IMAGES_URL": "https://xdaocaxazygrhqjiaclt.supabase.co/storage/v1/object/public/phuket-tourist/",
+        "EXPO_PUBLIC_MAP_API": "pk.MAPBOX_TOKEN_REDACTED"
+      },
+      "ios": {
+        "simulator": true
+      }
+    },
+    "preview": {
+      "channel": "preview",
+      "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://allinphuket.up.railway.app",
+        "EXPO_PUBLIC_IMAGES_URL": "https://xdaocaxazygrhqjiaclt.supabase.co/storage/v1/object/public/phuket-tourist/",
+        "EXPO_PUBLIC_MAP_API": "pk.MAPBOX_TOKEN_REDACTED"
+      }
+    },
+    "production": {
+      "channel": "production",
+      "distribution": "store",
+      "autoIncrement": true,
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://allinphuket.up.railway.app",
+        "EXPO_PUBLIC_IMAGES_URL": "https://xdaocaxazygrhqjiaclt.supabase.co/storage/v1/object/public/phuket-tourist/",
+        "EXPO_PUBLIC_MAP_API": "pk.MAPBOX_TOKEN_REDACTED"
+      }
+    }
+  },
+
+  "submit": {
+    "production": {
+      "ios": {
+        "appleId": "me@marius.dev",
+        "ascAppId": "6470644392",
+        "appleTeamId": "92D832443B"
+      }
+    }
+  }
+}

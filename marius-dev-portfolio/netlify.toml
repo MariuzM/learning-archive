@@ -1,0 +1,16 @@
+[build]
+command = "npm run build"
+# functions = "lambda"
+publish = "build"
+
+[[redirects]]
+	from = "/vip-ml"
+	to = "https://vip-ml.netlify.app/"
+	# status = 200
+	# force = true
+
+[[redirects]]
+	from = "/test"
+	to = "https://determined-curie-bc9b33.netlify.app/"
+	status = 200
+	force = true

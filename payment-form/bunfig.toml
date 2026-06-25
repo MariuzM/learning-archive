@@ -1,0 +1,2 @@
+[install.scopes]
+"@mariuzm" = { token = "$GPRT", url = "$GPRU" }

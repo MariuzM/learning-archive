@@ -1,0 +1,8 @@
+{
+	"scripts": {
+		"start:app1": "npm --prefix app1 run start",
+		"start:app2": "npm --prefix app2 run start",
+		"build:app1": "npm --prefix app1 run build",
+		"build:app2": "npm --prefix app2 run build"
+	}
+}

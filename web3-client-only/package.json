@@ -1,0 +1,48 @@
+{
+  "name": "cryto-wallet",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "d": "next dev",
+    "dev": "next dev",
+    "bu": "next build",
+    "bs": "next build && next start",
+    "bl": "src/scripts/build-pot.sh",
+    "blj": "src/scripts/build-json.sh",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@emotion/react": "^11.10.5",
+    "@emotion/styled": "^11.10.5",
+    "@mui/icons-material": "^5.11.0",
+    "@mui/material": "^5.11.2",
+    "@tanstack/react-query": "^4.20.4",
+    "@web3modal/ethereum": "2.0.0-rc.1",
+    "@web3modal/react": "2.0.0-rc.1",
+    "ethers": "^5.7.2",
+    "i18next": "^22.4.6",
+    "i18next-conv": "^13.1.0",
+    "next": "13.1.1",
+    "next-i18next": "^13.0.2",
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
+    "react-i18next": "^12.1.1",
+    "sharp": "^0.31.3",
+    "wagmi": "^0.9.5",
+    "zustand": "^4.1.5"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.20.7",
+    "@types/node": "18.11.17",
+    "@types/react": "18.0.26",
+    "@types/react-dom": "18.0.10",
+    "eslint": "8.30.0",
+    "eslint-config-next": "13.1.1",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "eslint-plugin-simple-import-sort": "^8.0.0",
+    "prettier": "^2.8.1",
+    "typescript": "4.9.4"
+  }
+}

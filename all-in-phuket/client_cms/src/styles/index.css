@@ -1,0 +1,38 @@
+@layer {
+  @tailwind base;
+}
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --Bg: #1d232a;
+  --Accent: #c2947e;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+:focus,
+:focus-within {
+  border-color: var(--Accent);
+}
+
+#root {
+  background-color: var(--Bg);
+  height: 100vh;
+  /* overflow-x: scroll; */
+  max-width: 100vw;
+  overflow-x: hidden;
+  overflow-y: hidden;
+  /* width: 100vw; */
+  /* background-color: red; */
+}
+
+.active {
+  background-color: var(--Accent);
+  color: var(--Bg);
+  font-weight: bold;
+}

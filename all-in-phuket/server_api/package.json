@@ -1,0 +1,59 @@
+{
+  "name": "server-fastify",
+  "type": "commonjs",
+  "engines": {
+    "node": "^20.11.0",
+    "pnpm": "^8.14.1"
+  },
+  "scripts": {
+    "d": "pnpm run dev",
+    "st": "pnpm run start",
+    "bs": "pnpm run build && pnpm run start",
+    "================================================": "",
+    "dev": "tsx watch src/app.ts",
+    "build": "tsc -build",
+    "compile_test": "bun build ./src/app.ts --compile --minify --outfile myApp",
+    "start": "node build/app.js",
+    "========== CHECK ===============================": "",
+    "lint": "eslint 'src/**/*.ts'",
+    "check": "pnpm tsc --noEmit --skipLibCheck",
+    "pretty": "prettier --write 'src/**/*.{js,ts,tsx,mjs,cjs,json}'",
+    "========== CLEAN ===============================": "",
+    "cl": "rm -rf build node_modules bun.lockb pnpm-lock.yaml && pnpm install && pnpm run d",
+    "========== DB ==================================": "",
+    "dbpull": "drizzle-kit introspect:pg",
+    "dbgen": "drizzle-kit generate:pg",
+    "dbpush": "drizzle-kit push:pg",
+    "========== UPDATE ==============================": "",
+    "up": "ncu -u && pnpm run cl"
+  },
+  "dependencies": {
+    "@fastify/cors": "^9.0.1",
+    "@fastify/type-provider-typebox": "^4.0.0",
+    "@sinclair/typebox": "^0.32.15",
+    "@supabase/supabase-js": "^2.39.8",
+    "argon2": "^0.40.1",
+    "dotenv": "^16.4.5",
+    "drizzle-orm": "^0.30.2",
+    "drizzle-typebox": "^0.1.1",
+    "fastify": "^4.26.2",
+    "fastify-socket.io": "^5.0.0",
+    "jose": "^5.2.3",
+    "postgres": "3.4.3",
+    "sharp": "0.33.2",
+    "socket.io": "^4.7.4",
+    "uuid": "^9.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.27",
+    "@typescript-eslint/eslint-plugin": "^7.2.0",
+    "@typescript-eslint/parser": "^7.2.0",
+    "drizzle-kit": "^0.20.14",
+    "eslint": "8.57.0",
+    "eslint-plugin-import": "^2.29.1",
+    "prettier": "^3.2.5",
+    "tsx": "^4.7.1",
+    "types-fastify-socket.io": "^0.0.1",
+    "typescript": "^5.4.2"
+  }
+}

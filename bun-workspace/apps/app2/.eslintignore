@@ -1,0 +1,6 @@
+**/.expo
+**/.next
+**/build
+**/dist
+**/iOS
+**/node_modules

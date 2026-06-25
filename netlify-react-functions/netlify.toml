@@ -1,0 +1,12 @@
+[build]
+command = "npm run prod"
+functions = "lambda"
+publish = "build"
+
+[[redirects]]
+from = "/_base"
+to = "/.netlify/functions/_base"
+
+[[redirects]]
+from = "/_base2"
+to = "/.netlify/functions/_base2"

@@ -1,0 +1,16 @@
+.DS_Store
+assets/
+jai/*.o
+jai/.build/
+jai/build/
+jai/main
+jai/main.dSYM/
+odin/*.bin
+odin/*.o
+odin/pdf-image-counter
+rust/target/
+zig/.zig-cache/
+zig/main
+zig/main.o
+zig/zig-cache/
+zig/zig-out/

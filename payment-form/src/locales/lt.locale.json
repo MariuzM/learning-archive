@@ -1,0 +1,46 @@
+{
+	"title": "Mokėjimo forma",
+	"senderAccount": {
+		"required": "Siuntėjo sąskaita yra privaloma",
+		"label": "Pasirinkite savo sąskaitą pinigų siuntimui",
+		"placeholder": "Pasirinkite savo sąskaitą"
+	},
+	"senderAmount": {
+		"min": "Suma turi būti bent 0.01",
+		"max": "Suma turi būti mažesnė nei ${0}",
+		"label": "Suma",
+		"placeholder": "Įveskite sumą",
+		"insufficient": "Mokėjimo siuntimo sąskaitos balansas yra nepakankamas"
+	},
+	"receiverAccount": {
+		"required": "Gavėjo sąskaita yra privaloma",
+		"invalid": "Neteisingas IBAN formatas",
+		"label": "Gavėjo sąskaita",
+		"placeholder": "Įveskite gavėjo sąskaitą"
+	},
+	"receiverName": {
+		"required": "Gavėjo vardas yra privalomas",
+		"max": "Gavėjo vardas turi būti trumpesnis nei 70 simbolių",
+		"label": "Gavėjo vardas",
+		"placeholder": "Įveskite gavėjo vardą"
+	},
+	"receiverAmount": {
+		"min": "Gavėjo suma turi būti bent 0.01",
+		"label": "Gavėjo suma",
+		"placeholder": "Įveskite gavėjo sumą"
+	},
+	"senderPurpose": {
+		"min": "Mokėjimo paskirtis turi būti bent 3 simbolių",
+		"max": "Mokėjimo paskirtis turi būti trumpesnė nei 135 simbolių",
+		"label": "Mokėjimo paskirtis",
+		"placeholder": "Įveskite mokėjimo paskirtį"
+	},
+	"transaction": {
+		"success": "Mokėjimas sėkmingas"
+	},
+	"currentBalance": "Dabartinė likutis",
+	"afterBalance": "Po mokėjimo likutis",
+	"buttons": {
+		"submit": "Pateikti"
+	}
+}
