@@ -1,0 +1,25 @@
+# Rust
+rust/target/
+
+# Zig
+zig/.zig-cache/
+zig/zig-out/
+zig/zig-pkg/
+
+# Nim
+nim/nimcache/
+nim/main
+
+# Node
+node/node_modules/
+node/bun.lockb
+
+# Python
+python/__pycache__/
+python/.venv/
+
+# Jai
+jai/.build/
+jai/main
+
+# Built server binaries dropped in /tmp are not tracked anyway

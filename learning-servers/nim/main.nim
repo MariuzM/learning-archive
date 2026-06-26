@@ -1,41 +1,25 @@
-import std/[asynchttpserver, asyncdispatch, httpcore, logging, os, posix]
+import std/[logging, posix]
+import mummy, mummy/routers
 
 const body = "Hello from Nim!\n"
 
-# Flipped by the signal handler; the accept loop polls it to stop cleanly.
-var running = true
+proc hello(request: Request) =
+  var headers: HttpHeaders
+  headers["Content-Type"] = "text/plain; charset=utf-8"
+  request.respond(200, headers, body)
 
-proc handle(req: Request) {.async, gcsafe.} =
-  let headers = newHttpHeaders({"Content-Type": "text/plain; charset=utf-8"})
-  try:
-    await req.respond(Http200, body, headers)
-  except CatchableError:
-    discard # client went away mid-response; nothing to recover
+var router: Router
+router.get("/", hello)
 
-proc main() =
-  addHandler(newConsoleLogger(fmtStr = "[$time] $levelname "))
+# mummy runs a fixed pool of worker threads draining one event loop, so a slow
+# handler never blocks accept. Tune workerThreads for the box; default is 2x cores.
+let server = newServer(router)
 
-  onSignal(SIGINT, SIGTERM):
-    running = false
-
-  let server = newAsyncHttpServer()
-  server.listen(Port(8080), "127.0.0.1")
-  info "listening on http://127.0.0.1:8080"
-
-  # acceptRequest dispatches each connection with asyncCheck, so the event loop
-  # serves many clients concurrently. Keep exactly one accept outstanding and
-  # poll with a timeout so SIGINT/SIGTERM is noticed within ~200ms.
-  var accept = server.acceptRequest(handle)
-  while running:
-    if accept.finished:
-      if accept.failed:
-        warn "accept failed: " & accept.error.msg
-      accept = server.acceptRequest(handle)
-    if hasPendingOperations():
-      poll(200)
-    else:
-      sleep(200)
-  server.close()
+# close() unblocks serve() from the event loop; safe to call from a signal.
+onSignal(SIGINT, SIGTERM):
   info "shutting down"
+  server.close()
 
-main()
+addHandler(newConsoleLogger(fmtStr = "[$time] $levelname "))
+info "listening on http://127.0.0.1:8080"
+server.serve(Port(8080), address = "127.0.0.1")
