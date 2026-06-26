@@ -11,6 +11,7 @@ main :: () {
     }
 
     server.response = sprint("HTTP/1.1 200 OK\r\nContent-Type: text/plain; charset=utf-8\r\nContent-Length: %\r\nConnection: close\r\n\r\n%", BODY.count, BODY);
+    server.pdf_text = "Hello from Jai! PDF benchmark.";
 
     print("listening on http://127.0.0.1:%\n", PORT);
 

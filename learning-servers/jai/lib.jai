@@ -1,10 +1,21 @@
 #import "Basic";
+#import "File";
 #import "Socket";
 #import "POSIX";
 Threads :: #import "Thread";
 
 NUM_WORKERS :: 8;
 QUEUE_CAP   :: 256;
+
+// Baked into the binary at compile time; per-request work is assembling the PDF.
+// 240x160 baseline JPEG, embedded via /DCTDecode. Read relative to this file so
+// the path holds no matter what directory the compiler is invoked from.
+JPEG :: #run read_asset();
+read_asset :: () -> string {
+    data, ok := read_entire_file(tprint("%/../assets/sample.jpg", #filepath));
+    assert(ok, "could not read assets/sample.jpg at compile time");
+    return data;
+}
 
 Http_Server :: struct {
     fd:        s32;
@@ -16,8 +27,11 @@ Http_Server :: struct {
     not_empty: Threads.Condition_Variable;
     running:   bool = true;
 
-    // Full HTTP response sent for every request. Built once by the caller.
+    // Full HTTP response sent for "/" requests. Built once by the caller.
     response:  string;
+
+    // Text drawn into the PDF returned for "/pdf" requests.
+    pdf_text:  string;
 }
 
 // Bind and listen on the given port. Returns false if the socket can't be set up.
@@ -146,7 +160,125 @@ handle_client :: (server: *Http_Server, client: s32) {
         if has_header_end(buffer.data, total)  break;
     }
 
-    send_all(client, server.response);
+    if str_eq(request_path(buffer.data, total), "/pdf") {
+        pdf := build_pdf(server.pdf_text);
+        defer free(pdf.data);
+
+        header: [..]u8;
+        defer array_free(header);
+        pdf_append(*header, "HTTP/1.1 200 OK\r\nContent-Type: application/pdf\r\nContent-Length: ");
+        pdf_append_int(*header, pdf.count);
+        pdf_append(*header, "\r\nConnection: close\r\n\r\n");
+
+        send_all(client, to_string(header));
+        send_all(client, pdf);
+    } else {
+        send_all(client, server.response);
+    }
+}
+
+// Parse the request-target out of "GET <path> HTTP/1.1", stopping at '?'.
+request_path :: (buf: *u8, n: int) -> string {
+    i := 0;
+    while i < n && buf[i] != #char " "  i += 1; // skip method
+    i += 1;
+    start := i;
+    while i < n && buf[i] != #char " " && buf[i] != #char "?"  i += 1;
+    p: string = ---;
+    p.data = buf + start;
+    p.count = i - start;
+    return p;
+}
+
+str_eq :: (a: string, b: string) -> bool {
+    if a.count != b.count  return false;
+    for 0..a.count - 1  if a[it] != b[it]  return false;
+    return true;
+}
+
+to_string :: (a: [..]u8) -> string {
+    s: string = ---;
+    s.data = a.data;
+    s.count = a.count;
+    return s;
+}
+
+pdf_append :: (buf: *[..]u8, s: string) {
+    old := buf.count;
+    array_resize(buf, buf.count + s.count);
+    memcpy(buf.data + old, s.data, s.count);
+}
+
+// Append decimal digits without touching temporary storage (runs per request).
+pdf_append_int :: (buf: *[..]u8, n: int) {
+    if n == 0 { array_add(buf, #char "0"); return; }
+    digits: [20]u8;
+    i := 0;
+    v := n;
+    while v > 0 { digits[i] = cast(u8)(#char "0" + (v % 10)); v /= 10; i += 1; }
+    while i > 0 { i -= 1; array_add(buf, digits[i]); }
+}
+
+// 10-digit zero-padded offset for an xref entry.
+pdf_append_pad10 :: (buf: *[..]u8, n: int) {
+    digits: [10]u8;
+    v := n;
+    i := 9;
+    while i >= 0 { digits[i] = cast(u8)(#char "0" + (v % 10)); v /= 10; i -= 1; }
+    for 0..9  array_add(buf, digits[it]);
+}
+
+// Assemble a one-page PDF (text + embedded JPEG). Caller frees the returned data.
+build_pdf :: (text: string) -> string {
+    content: [..]u8;
+    defer array_free(content);
+    pdf_append(*content, "BT\n/F1 24 Tf\n72 720 Td\n(");
+    pdf_append(*content, text);
+    pdf_append(*content, ") Tj\nET\nq\n240 0 0 160 72 520 cm\n/Im1 Do\nQ\n");
+
+    buf: [..]u8;
+    pdf_append(*buf, "%PDF-1.4\n%");
+    array_add(*buf, 0xe2); array_add(*buf, 0xe3); array_add(*buf, 0xcf); array_add(*buf, 0xd3);
+    array_add(*buf, #char "\n");
+
+    offsets: [6]int;
+    for i: 0..5 {
+        offsets[i] = buf.count;
+        pdf_append_int(*buf, i + 1);
+        pdf_append(*buf, " 0 obj\n");
+        if i == {
+            case 0; pdf_append(*buf, "<< /Type /Catalog /Pages 2 0 R >>");
+            case 1; pdf_append(*buf, "<< /Type /Pages /Kids [3 0 R] /Count 1 >>");
+            case 2; pdf_append(*buf, "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R >> /XObject << /Im1 5 0 R >> >> /Contents 6 0 R >>");
+            case 3; pdf_append(*buf, "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>");
+            case 4;
+                pdf_append(*buf, "<< /Type /XObject /Subtype /Image /Width 240 /Height 160 /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ");
+                pdf_append_int(*buf, JPEG.count);
+                pdf_append(*buf, " >>\nstream\n");
+                pdf_append(*buf, JPEG);
+                pdf_append(*buf, "\nendstream");
+            case 5;
+                pdf_append(*buf, "<< /Length ");
+                pdf_append_int(*buf, content.count);
+                pdf_append(*buf, " >>\nstream\n");
+                pdf_append(*buf, to_string(content));
+                pdf_append(*buf, "endstream");
+        }
+        pdf_append(*buf, "\nendobj\n");
+    }
+
+    xref_off := buf.count;
+    pdf_append(*buf, "xref\n0 7\n0000000000 65535 f\r\n");
+    for off: offsets {
+        pdf_append_pad10(*buf, off);
+        pdf_append(*buf, " 00000 n\r\n");
+    }
+    pdf_append(*buf, "trailer\n<< /Size 7 /Root 1 0 R >>\nstartxref\n");
+    pdf_append_int(*buf, xref_off);
+    pdf_append(*buf, "\n%%EOF\n");
+
+    // Hand ownership of the buffer's storage to the caller as a string.
+    return to_string(buf);
 }
 
 send_all :: (fd: s32, data: string) -> bool {

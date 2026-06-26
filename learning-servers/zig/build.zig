@@ -18,6 +18,11 @@ pub fn build(b: *std.Build) void {
         }),
     });
     exe.root_module.addImport("zap", zap.module("zap"));
+    // The shared image lives outside the Zig package, so wire it in as an
+    // anonymous import that @embedFile can reach.
+    exe.root_module.addAnonymousImport("sample_jpg", .{
+        .root_source_file = b.path("../assets/sample.jpg"),
+    });
     b.installArtifact(exe);
 
     const run_cmd = b.addRunArtifact(exe);

@@ -21,7 +21,14 @@ server is built on the standard library and hardened by hand (Jai).
 | Python | `cd python && pip install -r requirements.txt && python server.py` | [`starlette`](https://www.starlette.io/) + [`uvicorn`](https://www.uvicorn.org/) (one worker/core) |
 | Jai    | `jai jai/main.jai -output_path /tmp && /tmp/main` | hand-rolled stdlib sockets |
 
-Then in another terminal: `curl http://127.0.0.1:8080`
+Then in another terminal:
+
+- `curl http://127.0.0.1:8080` — the `Hello from <language>!` text response.
+- `curl http://127.0.0.1:8080/pdf -o out.pdf` — a one-page PDF (heading text
+  + an embedded JPEG) **built from scratch on every request**. Every server
+  hand-assembles the same PDF bytes (objects, xref, `DCTDecode` image) with
+  no PDF library, so it doubles as a CPU-bound workload benchmark.
+
 Press `Ctrl+C` (or `kill -TERM <pid>`) to watch each one shut down cleanly.
 
 Set `RUST_LOG=debug` for the Rust server to see per-request tracing.
@@ -78,6 +85,51 @@ churn in disguise.
 > The `read N` socket errors `wrk` reports at the end of the churn test
 > (where `N` == connection count) are an artifact of the server closing
 > each connection as `wrk` finishes — the requests themselves succeeded.
+
+## PDF workload — concurrency & latency
+
+The `/pdf` route is a heavier, CPU-bound task: every request hand-assembles
+a one-page PDF (heading text + a 240×160 JPEG embedded via `DCTDecode`,
+≈9.5 KB out). No PDF library in any language — the same byte layout built by
+hand, so it measures each runtime's allocation + byte-shuffling speed plus
+how its concurrency model holds up. Keep-alive, `wrk -t4`, 8s per level.
+Throughput is **PDFs built and served per second**; latency is per request.
+
+| Language | @50 conc | p99 | @200 conc | p99 | @400 conc | p99 |
+|----------|---------:|----:|----------:|----:|----------:|----:|
+| Zig    | 153k | 0.45ms | 159k | 1.6ms | 161k | **3.0ms** |
+| Rust   | 143k | 0.60ms | 152k | 2.3ms | 155k | 4.6ms |
+| Nim    |  80k | 0.78ms |  78k | 3.3ms |  78k | 6.8ms |
+| Python |  64k | 13ms   |  69k | 36ms  |  70k | 37ms |
+| Node   |  43k | 2.2ms  |  41k | 75ms  |  38k | **521ms** |
+| Jai\*\* |  23k | 28ms   |   — |  —    |   — |  —   |
+
+So at **400 concurrent users**, Zig and Rust each build ~155–160k PDFs/sec
+with a p99 under 5ms; Nim sustains ~78k under 7ms; Python ~70k but with a
+fatter tail; Node's throughput holds around 40k but its p99 blows out to
+half a second.
+
+Takeaways:
+
+- **Zig and Rust** are in a class of their own here — highest throughput,
+  and a p99 that barely moves as concurrency climbs. The compiled,
+  multi-threaded reactors absorb the per-request allocation cheaply.
+- **Nim/mummy** is the steady mid-tier: flat ~78k regardless of load with a
+  tight tail.
+- **Python** scales throughput well across its 10 workers but carries a
+  consistently higher tail (GIL + cross-process scheduling); fine when you
+  care about throughput, less so for p99-sensitive work.
+- **Node** is the cautionary tale: a single event loop doing CPU-bound
+  buffer assembly plus GC means tail latency **detonates** under load (p99
+  521ms at 400 concurrent) even though median stays reasonable. You'd move
+  the PDF build to a `worker_threads` pool or `cluster` for real use.
+- **Jai** can't play this game: with no keep-alive, `/pdf` is pure
+  connection churn, so past ~50 concurrent it falls off the same TIME_WAIT
+  cliff as the hello benchmark (~220 req/s at 400). Its one honest number is
+  ~23k PDFs/sec at 50 concurrent.
+
+\*\* Jai has no keep-alive, so beyond ~50 concurrent connections it collapses
+to a few hundred req/s (connection churn, not PDF cost). Numbers omitted.
 
 ## How each handles concurrency & shutdown
 
