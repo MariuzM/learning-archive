@@ -1,11 +1,22 @@
-CXX ?= c++
-CXXFLAGS := -std=c++17 -O2 -pthread -Ivendor
+BUILD := build
+DEPS := .deps/prefix
+BREW := $(shell brew --prefix)/opt
 
-server: src/main.cpp vendor/httplib.h vendor/json.hpp
-	$(CXX) $(CXXFLAGS) src/main.cpp -o server
+server: $(BUILD)/server
+	cp $(BUILD)/server server
+
+$(DEPS)/lib/libdrogon.a:
+	./deps.sh
+
+$(BUILD)/server: src/main.cpp CMakeLists.txt $(DEPS)/lib/libdrogon.a
+	cmake -S . -B $(BUILD) -DCMAKE_PREFIX_PATH="$(abspath $(DEPS));$(BREW)/openssl@3;$(BREW)/brotli;$(BREW)/c-ares"
+	cmake --build $(BUILD) -j
 
 run: server
 	./server
 
 clean:
-	rm -f server
+	rm -rf $(BUILD) server
+
+distclean: clean
+	rm -rf .deps

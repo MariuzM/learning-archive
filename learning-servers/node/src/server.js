@@ -1,12 +1,15 @@
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
+import { isSea, getRawAsset } from "node:sea";
 import Fastify from "fastify";
 
 // Read the shared assets once at startup; per-request work is assembling the PDF.
-const JPEG = readFileSync(fileURLToPath(new URL("../../assets/sample.jpg", import.meta.url)));
-const LINES = JSON.parse(
-  readFileSync(fileURLToPath(new URL("../../assets/content.json", import.meta.url)), "utf8"),
-).lines;
+const asset = (name) =>
+  isSea()
+    ? Buffer.from(getRawAsset(name))
+    : readFileSync(fileURLToPath(new URL("../../assets/" + name, import.meta.url)));
+const JPEG = asset("sample.jpg");
+const LINES = JSON.parse(asset("content.json").toString("utf8")).lines;
 
 const LINES_PER_PAGE = 45;
 const FONT_SIZE = 11;
@@ -146,9 +149,11 @@ const shutdown = async () => {
 process.on("SIGINT", shutdown);
 process.on("SIGTERM", shutdown);
 
-try {
-  await app.listen({ port: 8080, host: "127.0.0.1" });
-} catch (e) {
-  app.log.error(e);
-  process.exit(1);
-}
+(async () => {
+  try {
+    await app.listen({ port: 8080, host: "127.0.0.1" });
+  } catch (e) {
+    app.log.error(e);
+    process.exit(1);
+  }
+})();

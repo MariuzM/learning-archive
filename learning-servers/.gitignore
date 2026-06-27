@@ -13,12 +13,11 @@ nim/main
 # Node / Bun
 node/node_modules/
 node/bun.lockb
+node/node-server
 elysia/node_modules/
+elysia/elysia-server
 hono/node_modules/
-
-# Python
-python/**/__pycache__/
-python/.venv/
+hono/hono-server
 
 # Jai
 jai/.build/
@@ -35,5 +34,7 @@ odin/odinserver
 # C++
 cpp/vendor/
 cpp/server
+cpp/build/
+cpp/.deps/
 
 # Built server binaries dropped in /tmp are not tracked anyway

@@ -1,14 +1,11 @@
 import { readFileSync } from "node:fs";
-import { fileURLToPath } from "node:url";
 import { Elysia, t } from "elysia";
+import jpegFile from "../../assets/sample.jpg" with { type: "file" };
+import contentFile from "../../assets/content.json" with { type: "file" };
 
 // Read the shared assets once at startup; per-request work is assembling the PDF.
-const JPEG = readFileSync(fileURLToPath(new URL("../../assets/sample.jpg", import.meta.url)));
-const LINES = (
-  JSON.parse(
-    readFileSync(fileURLToPath(new URL("../../assets/content.json", import.meta.url)), "utf8"),
-  ) as { lines: string[] }
-).lines;
+const JPEG = readFileSync(jpegFile);
+const LINES = (JSON.parse(readFileSync(contentFile, "utf8")) as { lines: string[] }).lines;
 
 const LINES_PER_PAGE = 45;
 const FONT_SIZE = 11;

@@ -1,2 +1,5 @@
 -std=c++17
 -Ivendor
+-I/opt/homebrew/opt/drogon/include
+-I/opt/homebrew/opt/trantor/include
+-I/opt/homebrew/opt/jsoncpp/include

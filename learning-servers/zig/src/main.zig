@@ -6,12 +6,8 @@ const host = "127.0.0.1";
 const port: usize = 8080;
 const body = "Hello from Zig!\n";
 
-// Baked into the binary at compile time; per-request work is assembling the PDF.
-// 240x160 baseline JPEG, embedded via /DCTDecode.
 const jpeg = @embedFile("sample_jpg");
 
-// The text to render, embedded and parsed once at startup (before zap.start
-// forks, so workers inherit it). ~100 pages of lines.
 const content_json = @embedFile("content_json");
 const Doc = struct { lines: [][]const u8 };
 var lines: [][]const u8 = undefined;
@@ -28,7 +24,6 @@ fn appendInt(buf: *std.ArrayList(u8), alloc: std.mem.Allocator, n: usize) !void 
     try buf.appendSlice(alloc, std.fmt.bufPrint(&tmp, "{d}", .{n}) catch unreachable);
 }
 
-// One cover page (heading + JPEG) then the JSON text paginated 45 lines/page.
 fn buildPdf(alloc: std.mem.Allocator, heading: []const u8) ![]u8 {
     var contents: std.ArrayList([]u8) = .empty;
     defer {
@@ -78,7 +73,7 @@ fn buildPdf(alloc: std.mem.Allocator, heading: []const u8) ![]u8 {
         objects.deinit(alloc);
     }
 
-    try objects.append(alloc, try alloc.dupe(u8, "<< /Type /Catalog /Pages 2 0 R >>")); // 1
+    try objects.append(alloc, try alloc.dupe(u8, "<< /Type /Catalog /Pages 2 0 R >>"));
     {
         var o: std.ArrayList(u8) = .empty;
         errdefer o.deinit(alloc);
@@ -92,9 +87,9 @@ fn buildPdf(alloc: std.mem.Allocator, heading: []const u8) ![]u8 {
         try o.appendSlice(alloc, "] /Count ");
         try appendInt(&o, alloc, num_pages);
         try o.appendSlice(alloc, " >>");
-        try objects.append(alloc, try o.toOwnedSlice(alloc)); // 2
+        try objects.append(alloc, try o.toOwnedSlice(alloc));
     }
-    try objects.append(alloc, try alloc.dupe(u8, "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>")); // 3
+    try objects.append(alloc, try alloc.dupe(u8, "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>"));
     {
         var o: std.ArrayList(u8) = .empty;
         errdefer o.deinit(alloc);
@@ -103,7 +98,7 @@ fn buildPdf(alloc: std.mem.Allocator, heading: []const u8) ![]u8 {
         try o.appendSlice(alloc, " >>\nstream\n");
         try o.appendSlice(alloc, jpeg);
         try o.appendSlice(alloc, "\nendstream");
-        try objects.append(alloc, try o.toOwnedSlice(alloc)); // 4
+        try objects.append(alloc, try o.toOwnedSlice(alloc));
     }
     {
         var k: usize = 0;
@@ -157,9 +152,6 @@ fn buildPdf(alloc: std.mem.Allocator, heading: []const u8) ![]u8 {
     return buf.toOwnedSlice(alloc);
 }
 
-// Heavy, real-world incoming-request validation. Zig has no validation library,
-// so std.json does the structural parse (typed fields; unknown fields are an
-// error by default) and the field constraints are checked by hand below.
 const Item = struct { sku: []const u8, qty: i64, price: f64 };
 const Payload = struct {
     username: []const u8,
@@ -262,19 +254,9 @@ fn validate(r: zap.Request) !void {
     }
 }
 
-// Fastify-style app: `app.get("/hello", handler)`. zap's on_request is a bare
-// function pointer with no user-data slot, so we follow zap.Router's pattern and
-// keep the active App in a singleton the static callback reaches through.
-//
-// Routes are keyed by "METHOD path" (e.g. "GET /hello") in an exact-match map, so
-// the same path under different verbs is just two entries. The map is populated
-// before zap.start forks its workers, then read-only — concurrent reads are safe.
 const App = struct {
     routes: std.StringHashMap(zap.HttpRequestFn),
     allocator: std.mem.Allocator,
-    // zap stashes a pointer to this listener in a global that the request
-    // callback dereferences per request, so it must outlive listen(). Keeping it
-    // as a field ties its lifetime to the App.
     listener: zap.HttpListener = undefined,
 
     var _instance: *App = undefined;
@@ -367,8 +349,6 @@ fn pdf(r: zap.Request) !void {
 }
 
 pub fn main() !void {
-    // Parse the embedded JSON once before zap forks its workers; the parsed data
-    // lives for the process lifetime (intentionally not freed).
     const parsed = try std.json.parseFromSlice(Doc, std.heap.c_allocator, content_json, .{ .ignore_unknown_fields = true });
     lines = parsed.value.lines;
 
@@ -385,10 +365,6 @@ pub fn main() !void {
 
     log.info("listening on http://{s}:{d}", .{ host, port });
 
-    // facil.io (under zap) installs its own SIGINT/SIGTERM handlers and drains
-    // in-flight work before zap.start returns. Prefork workers each run their own
-    // reactor and accept() independently, so connection-churn (one request per
-    // connection) scales across processes; threads fan request handling per worker.
     zap.start(.{ .threads = 4, .workers = 2 });
 
     log.info("shutting down", .{});
