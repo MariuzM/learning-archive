@@ -14,13 +14,25 @@ static void simulate(Box& box, float dt) {
     box.x += box.vx * dt;
     box.y += box.vy * dt;
 
-    if (box.x < 0) { box.x = 0; box.vx = std::fabs(box.vx); }
-    if (box.y < 0) { box.y = 0; box.vy = std::fabs(box.vy); }
+    if (box.x < 0) {
+        box.x = 0;
+        box.vx = std::fabs(box.vx);
+    }
+    if (box.y < 0) {
+        box.y = 0;
+        box.vy = std::fabs(box.vy);
+    }
 
     const float max_x = WIDTH - BOX_SIZE;
     const float max_y = HEIGHT - BOX_SIZE;
-    if (box.x > max_x) { box.x = max_x; box.vx = -std::fabs(box.vx); }
-    if (box.y > max_y) { box.y = max_y; box.vy = -std::fabs(box.vy); }
+    if (box.x > max_x) {
+        box.x = max_x;
+        box.vx = -std::fabs(box.vx);
+    }
+    if (box.y > max_y) {
+        box.y = max_y;
+        box.vy = -std::fabs(box.vy);
+    }
 }
 
 static void draw(SDL_Renderer* renderer, const Box& box) {
