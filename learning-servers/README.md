@@ -28,8 +28,8 @@ libraries (`libSystem`, `libc++`, `libz`, `libresolv`) dynamically linked.
 | Zig    | [`zap`](https://github.com/zigzap/zap) (facil.io, prefork ×2) | `cd zig && zig build --release=fast` → `zig-out/bin/zigserver` |
 | Nim    | [`mummy`](https://github.com/guzba/mummy) | `nimble install mummy && nim c -d:release --threads:on --mm:orc -o:nim/main nim/src/main.nim` |
 | Node   | [`fastify`](https://github.com/fastify/fastify) | `cd node && bun install && ./build.sh` → `node-server` |
-| Elysia | [`elysia`](https://elysiajs.com/) (Bun) | `cd elysia && bun install && bun build src/server.ts --compile --outfile elysia-server` |
-| Hono   | [`hono`](https://hono.dev/) (Bun.serve) | `cd hono && bun install && bun build src/server.ts --compile --outfile hono-server` |
+| Elysia | [`elysia`](https://elysiajs.com/) (Bun) | `cd elysia && bun install && bun build src/main.ts --compile --outfile elysia-server` |
+| Hono   | [`hono`](https://hono.dev/) (Bun.serve) | `cd hono && bun install && bun build src/main.ts --compile --outfile hono-server` |
 | Jai    | hand-rolled stdlib sockets | `jai jai/src/main.jai -output_path /tmp` → `/tmp/main` |
 | Jai (lib) | [`farzher/Jai-HTTP-Server`](https://github.com/farzher/Jai-HTTP-Server) (kqueue) | `jai jai/src/main_farzher.jai -release -output_path /tmp/jf` → `/tmp/jf/main_farzher` |
 | Odin   | [`odin-http`](https://github.com/laytan/odin-http) (`core:nbio`) | `cd odin && git clone https://github.com/laytan/odin-http && odin build src -o:speed -out:odinserver` |

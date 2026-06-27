@@ -1,11 +1,5 @@
-#import,file "../Jai-HTTP-Server/module.jai";
-#load "validate.jai";
-
 #import "Basic";
 #import "File";
-Posix :: #import "POSIX";
-
-PORT :: 8080;
 
 LINES_PER_PAGE :: 45;
 FONT_SIZE      :: 11;
@@ -25,54 +19,8 @@ read_content :: () -> string {
     assert(ok, "could not read assets/content.json at compile time");
     return data;
 }
+
 LINES: [..]string;
-
-main :: () {
-    LINES = parse_lines(CONTENT);
-
-    install_shutdown_handler();
-
-    http_listen(port = PORT);
-
-    get("/", (request: *Request) {
-        send_text(request, "Hello from Jai!\n");
-    });
-    get("/hello", (request: *Request) {
-        send_text(request, "GET hello from Jai!\n");
-    });
-    post("/hello", (request: *Request) {
-        send_text(request, "POST hello from Jai!\n");
-    });
-    get("/pdf", (request: *Request) {
-        pdf := build_pdf("Hello from Jai! PDF benchmark.");
-        defer free(pdf.data);
-        send_response(request, pdf, content_type = "application/pdf");
-    });
-    post("/validate", (request: *Request) {
-        if validate_payload(request.body) {
-            send_response(request, "{\"valid\":true}", content_type = "application/json");
-        } else {
-            send_response(request, "{\"valid\":false}", status_code = 400, content_type = "application/json");
-        }
-    });
-
-    print("listening on http://127.0.0.1:%\n", PORT);
-
-    while !should_shutdown  sleep_milliseconds(50);
-    print("shutting down\n");
-}
-
-should_shutdown := false;
-install_shutdown_handler :: () {
-    handler :: (sig: s32) #c_call {
-        should_shutdown = true;
-    }
-    c_signal(Posix.SIGINT,  handler);
-    c_signal(Posix.SIGTERM, handler);
-}
-crt :: #system_library "libc";
-c_signal :: (sig: s32, handler: #type (s32) -> void #c_call) -> *void #foreign crt "signal";
-
 
 parse_lines :: (data: string) -> [..]string {
     result: [..]string;
@@ -94,6 +42,39 @@ parse_lines :: (data: string) -> [..]string {
     return result;
 }
 
+to_string :: (a: [..]u8) -> string {
+    s: string = ---;
+    s.data = a.data;
+    s.count = a.count;
+    return s;
+}
+
+pdf_append :: (buf: *[..]u8, s: string) {
+    old := buf.count;
+    array_resize(buf, buf.count + s.count);
+    memcpy(buf.data + old, s.data, s.count);
+}
+
+pdf_append_int :: (buf: *[..]u8, n: int) {
+    if n == 0 { array_add(buf, #char "0"); return; }
+    digits: [20]u8;
+    i := 0;
+    v := n;
+    while v > 0 { digits[i] = cast(u8)(#char "0" + (v % 10)); v /= 10; i += 1; }
+    while i > 0 { i -= 1; array_add(buf, digits[i]); }
+}
+
+pdf_append_pad10 :: (buf: *[..]u8, n: int) {
+    digits: [10]u8;
+    v := n;
+    i := 9;
+    while i >= 0 { digits[i] = cast(u8)(#char "0" + (v % 10)); v /= 10; i -= 1; }
+    for 0..9  array_add(buf, digits[it]);
+}
+
+pdf :: (body: string) -> Response {
+    return .{ content_type = "application/pdf", body = build_pdf("Hello from Jai! PDF benchmark."), free_body = true };
+}
 
 build_pdf :: (heading: string) -> string {
     contents: [..]string;
@@ -102,7 +83,7 @@ build_pdf :: (heading: string) -> string {
     pdf_append(*cover, "BT\n/F1 24 Tf\n72 720 Td\n(");
     pdf_append(*cover, heading);
     pdf_append(*cover, ") Tj\nET\nq\n240 0 0 160 72 520 cm\n/Im1 Do\nQ\n");
-    array_add(*contents, arr_to_string(cover));
+    array_add(*contents, to_string(cover));
 
     p := 0;
     while p * LINES_PER_PAGE < LINES.count {
@@ -125,7 +106,7 @@ build_pdf :: (heading: string) -> string {
             pdf_append(*c, ") Tj\n");
         }
         pdf_append(*c, "ET\n");
-        array_add(*contents, arr_to_string(c));
+        array_add(*contents, to_string(c));
         p += 1;
     }
     num_pages := contents.count;
@@ -143,7 +124,7 @@ build_pdf :: (heading: string) -> string {
         pdf_append(*o, "] /Count ");
         pdf_append_int(*o, num_pages);
         pdf_append(*o, " >>");
-        array_add(*objects, arr_to_string(o));
+        array_add(*objects, to_string(o));
     }
     array_add(*objects, copy_string("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>"));
     {
@@ -153,14 +134,14 @@ build_pdf :: (heading: string) -> string {
         pdf_append(*o, " >>\nstream\n");
         pdf_append(*o, JPEG);
         pdf_append(*o, "\nendstream");
-        array_add(*objects, arr_to_string(o));
+        array_add(*objects, to_string(o));
     }
     for k: 0..num_pages-1 {
         po: [..]u8;
         pdf_append(*po, "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> /XObject << /Im1 4 0 R >> >> /Contents ");
         pdf_append_int(*po, 6 + 2 * k);
         pdf_append(*po, " 0 R >>");
-        array_add(*objects, arr_to_string(po));
+        array_add(*objects, to_string(po));
 
         co: [..]u8;
         pdf_append(*co, "<< /Length ");
@@ -168,7 +149,7 @@ build_pdf :: (heading: string) -> string {
         pdf_append(*co, " >>\nstream\n");
         pdf_append(*co, contents[k]);
         pdf_append(*co, "endstream");
-        array_add(*objects, arr_to_string(co));
+        array_add(*objects, to_string(co));
     }
 
     buf: [..]u8;
@@ -205,27 +186,5 @@ build_pdf :: (heading: string) -> string {
     array_free(objects);
     array_free(offsets);
 
-    return arr_to_string(buf);
-}
-
-arr_to_string :: (a: [..]u8) -> string {
-    s: string = ---;
-    s.data  = a.data;
-    s.count = a.count;
-    return s;
-}
-
-pdf_append :: (buf: *[..]u8, s: string) {
-    if s.count == 0  return;
-    old := buf.count;
-    array_resize(buf, old + s.count);
-    memcpy(buf.data + old, s.data, s.count);
-}
-pdf_append_int :: (buf: *[..]u8, n: int) {
-    pdf_append(buf, tprint("%", n));
-}
-pdf_append_pad10 :: (buf: *[..]u8, n: int) {
-    s := tprint("%", n);
-    for 1..10-s.count  array_add(buf, #char "0");
-    pdf_append(buf, s);
+    return to_string(buf);
 }

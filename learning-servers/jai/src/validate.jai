@@ -1,15 +1,12 @@
-// Heavy, real-world incoming-request validation for both Jai servers. Jai has no
-// JSON or validation library, so this is a hand-rolled recursive JSON parser
-// (value tree) plus the same field constraints the other languages check.
 #import "Basic";
 
 Json_Kind :: enum u8 { NULL; BOOL; NUMBER; STRING; ARRAY; OBJECT; }
 Json_Member :: struct { key: string; value: Json_Value; }
 Json_Value :: struct {
     kind:    Json_Kind;
-    is_int:  bool;        // for NUMBER: true if no '.'/'e'
+    is_int:  bool;
     number:  float64;
-    str:     string;      // view into the source body (inputs have no escapes)
+    str:     string;
     array:   [..] Json_Value;
     members: [..] Json_Member;
 }
@@ -25,7 +22,7 @@ json_skip_ws :: (p: *Json_Parser) {
 }
 
 json_parse_string :: (p: *Json_Parser) -> string {
-    p.i += 1; // opening quote
+    p.i += 1;
     start := p.i;
     while p.i < p.s.count && p.s[p.i] != #char "\"" {
         if p.s[p.i] == #char "\\"  p.i += 1; // skip escaped char
@@ -35,7 +32,7 @@ json_parse_string :: (p: *Json_Parser) -> string {
     if p.i >= p.s.count { p.ok = false; return result; }
     result.data = p.s.data + start;
     result.count = p.i - start;
-    p.i += 1; // closing quote
+    p.i += 1;
     return result;
 }
 
@@ -66,7 +63,7 @@ json_parse_number :: (p: *Json_Parser) -> Json_Value {
 json_parse_array :: (p: *Json_Parser) -> Json_Value {
     v: Json_Value;
     v.kind = .ARRAY;
-    p.i += 1; // [
+    p.i += 1;
     json_skip_ws(p);
     if p.i < p.s.count && p.s[p.i] == #char "]" { p.i += 1; return v; }
     while true {
@@ -87,7 +84,7 @@ json_parse_array :: (p: *Json_Parser) -> Json_Value {
 json_parse_object :: (p: *Json_Parser) -> Json_Value {
     v: Json_Value;
     v.kind = .OBJECT;
-    p.i += 1; // {
+    p.i += 1;
     json_skip_ws(p);
     if p.i < p.s.count && p.s[p.i] == #char "}" { p.i += 1; return v; }
     while true {
@@ -96,7 +93,7 @@ json_parse_object :: (p: *Json_Parser) -> Json_Value {
         key := json_parse_string(p);
         json_skip_ws(p);
         if p.i >= p.s.count || p.s[p.i] != #char ":" { p.ok = false; return v; }
-        p.i += 1; // :
+        p.i += 1;
         val := json_parse_value(p);
         if !p.ok  return v;
         m: Json_Member;
@@ -139,8 +136,6 @@ json_get :: (v: Json_Value, key: string) -> *Json_Value {
     for * v.members  if it.key == key  return *it.value;
     return null;
 }
-
-// --- field checks ---
 
 vhas_prefix :: (s: string, prefix: string) -> bool {
     if s.count < prefix.count  return false;
@@ -201,7 +196,6 @@ v_country :: (s: string) -> bool {
     return false;
 }
 
-// Parse the body and check every field. Returns true only if all pass.
 validate_payload :: (body: string) -> bool {
     p: Json_Parser;
     p.s = body;

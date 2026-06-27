@@ -5,7 +5,7 @@ ROOT="$(cd "$HERE/.." && pwd)"
 cd "$HERE"
 
 echo "==> bundle (fastify inlined, CJS)"
-bun build src/server.js --target node --format cjs --outfile sea-bundle.cjs
+bun build src/main.js --target node --format cjs --outfile sea-bundle.cjs
 
 echo "==> sea config + blob"
 cat > sea-config.json <<EOF

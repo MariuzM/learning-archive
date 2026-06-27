@@ -1,20 +1,42 @@
-#load "lib.jai";
+#load "app.jai";
+#load "pdf.jai";
 #load "validate.jai";
 
 PORT :: 8080;
-BODY :: "Hello from Jai!\n";
+
+root :: (body: string) -> Response {
+    return .{ body = "Hello from Jai!\n" };
+}
+
+hello_get :: (body: string) -> Response {
+    return .{ body = "GET hello from Jai!\n" };
+}
+
+hello_post :: (body: string) -> Response {
+    return .{ body = "POST hello from Jai!\n" };
+}
+
+validate :: (body: string) -> Response {
+    if validate_payload(body) {
+        return .{ content_type = "application/json", body = "{\"valid\":true}" };
+    }
+    return .{ status = 400, content_type = "application/json", body = "{\"valid\":false}" };
+}
 
 main :: () {
-    server: Http_Server;
+    app: Http_Server;
 
-    if !http_listen(*server, PORT) {
+    if !http_listen(*app, PORT) {
         return;
     }
 
-    server.response = sprint("HTTP/1.1 200 OK\r\nContent-Type: text/plain; charset=utf-8\r\nContent-Length: %\r\nConnection: close\r\n\r\n%", BODY.count, BODY);
-    server.pdf_text = "Hello from Jai! PDF benchmark.";
+    app_get(*app, "/", root);
+    app_get(*app, "/hello", hello_get);
+    app_post(*app, "/hello", hello_post);
+    app_get(*app, "/pdf", pdf);
+    app_post(*app, "/validate", validate);
 
     print("listening on http://127.0.0.1:%\n", PORT);
 
-    http_run(*server);
+    http_run(*app);
 }

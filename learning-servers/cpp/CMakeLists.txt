@@ -11,6 +11,6 @@ set(OPENSSL_USE_STATIC_LIBS TRUE)
 
 find_package(Drogon REQUIRED)
 
-add_executable(server src/main.cpp)
+add_executable(server src/main.cpp src/pdf.cpp src/validate.cpp)
 target_include_directories(server PRIVATE vendor)
 target_link_libraries(server PRIVATE Drogon::Drogon)
