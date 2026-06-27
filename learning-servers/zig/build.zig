@@ -23,6 +23,9 @@ pub fn build(b: *std.Build) void {
     exe.root_module.addAnonymousImport("sample_jpg", .{
         .root_source_file = b.path("../assets/sample.jpg"),
     });
+    exe.root_module.addAnonymousImport("content_json", .{
+        .root_source_file = b.path("../assets/content.json"),
+    });
     b.installArtifact(exe);
 
     const run_cmd = b.addRunArtifact(exe);

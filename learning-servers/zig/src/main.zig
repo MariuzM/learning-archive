@@ -10,6 +10,17 @@ const body = "Hello from Zig!\n";
 // 240x160 baseline JPEG, embedded via /DCTDecode.
 const jpeg = @embedFile("sample_jpg");
 
+// The text to render, embedded and parsed once at startup (before zap.start
+// forks, so workers inherit it). ~100 pages of lines.
+const content_json = @embedFile("content_json");
+const Doc = struct { lines: [][]const u8 };
+var lines: [][]const u8 = undefined;
+
+const lines_per_page: usize = 45;
+const font_size: usize = 11;
+const line_step: usize = 16;
+const top_y: usize = 740;
+
 const log = std.log.scoped(.server);
 
 fn appendInt(buf: *std.ArrayList(u8), alloc: std.mem.Allocator, n: usize) !void {
@@ -17,55 +28,129 @@ fn appendInt(buf: *std.ArrayList(u8), alloc: std.mem.Allocator, n: usize) !void 
     try buf.appendSlice(alloc, std.fmt.bufPrint(&tmp, "{d}", .{n}) catch unreachable);
 }
 
-fn buildPdf(alloc: std.mem.Allocator, text: []const u8) ![]u8 {
-    var content: std.ArrayList(u8) = .empty;
-    defer content.deinit(alloc);
-    try content.appendSlice(alloc, "BT\n/F1 24 Tf\n72 720 Td\n(");
-    try content.appendSlice(alloc, text);
-    try content.appendSlice(alloc, ") Tj\nET\nq\n240 0 0 160 72 520 cm\n/Im1 Do\nQ\n");
+// One cover page (heading + JPEG) then the JSON text paginated 45 lines/page.
+fn buildPdf(alloc: std.mem.Allocator, heading: []const u8) ![]u8 {
+    var contents: std.ArrayList([]u8) = .empty;
+    defer {
+        for (contents.items) |c| alloc.free(c);
+        contents.deinit(alloc);
+    }
+
+    {
+        var c: std.ArrayList(u8) = .empty;
+        errdefer c.deinit(alloc);
+        try c.appendSlice(alloc, "BT\n/F1 24 Tf\n72 720 Td\n(");
+        try c.appendSlice(alloc, heading);
+        try c.appendSlice(alloc, ") Tj\nET\nq\n240 0 0 160 72 520 cm\n/Im1 Do\nQ\n");
+        try contents.append(alloc, try c.toOwnedSlice(alloc));
+    }
+    var p: usize = 0;
+    while (p * lines_per_page < lines.len) : (p += 1) {
+        const start = p * lines_per_page;
+        const stop = @min(start + lines_per_page, lines.len);
+        var c: std.ArrayList(u8) = .empty;
+        errdefer c.deinit(alloc);
+        try c.appendSlice(alloc, "BT\n/F1 ");
+        try appendInt(&c, alloc, font_size);
+        try c.appendSlice(alloc, " Tf\n72 ");
+        try appendInt(&c, alloc, top_y);
+        try c.appendSlice(alloc, " Td\n");
+        var j: usize = start;
+        while (j < stop) : (j += 1) {
+            if (j == start) {
+                try c.appendSlice(alloc, "(");
+            } else {
+                try c.appendSlice(alloc, "0 -");
+                try appendInt(&c, alloc, line_step);
+                try c.appendSlice(alloc, " Td\n(");
+            }
+            try c.appendSlice(alloc, lines[j]);
+            try c.appendSlice(alloc, ") Tj\n");
+        }
+        try c.appendSlice(alloc, "ET\n");
+        try contents.append(alloc, try c.toOwnedSlice(alloc));
+    }
+    const num_pages = contents.items.len;
+
+    var objects: std.ArrayList([]u8) = .empty;
+    defer {
+        for (objects.items) |o| alloc.free(o);
+        objects.deinit(alloc);
+    }
+
+    try objects.append(alloc, try alloc.dupe(u8, "<< /Type /Catalog /Pages 2 0 R >>")); // 1
+    {
+        var o: std.ArrayList(u8) = .empty;
+        errdefer o.deinit(alloc);
+        try o.appendSlice(alloc, "<< /Type /Pages /Kids [");
+        var k: usize = 0;
+        while (k < num_pages) : (k += 1) {
+            if (k > 0) try o.appendSlice(alloc, " ");
+            try appendInt(&o, alloc, 5 + 2 * k);
+            try o.appendSlice(alloc, " 0 R");
+        }
+        try o.appendSlice(alloc, "] /Count ");
+        try appendInt(&o, alloc, num_pages);
+        try o.appendSlice(alloc, " >>");
+        try objects.append(alloc, try o.toOwnedSlice(alloc)); // 2
+    }
+    try objects.append(alloc, try alloc.dupe(u8, "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>")); // 3
+    {
+        var o: std.ArrayList(u8) = .empty;
+        errdefer o.deinit(alloc);
+        try o.appendSlice(alloc, "<< /Type /XObject /Subtype /Image /Width 240 /Height 160 /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ");
+        try appendInt(&o, alloc, jpeg.len);
+        try o.appendSlice(alloc, " >>\nstream\n");
+        try o.appendSlice(alloc, jpeg);
+        try o.appendSlice(alloc, "\nendstream");
+        try objects.append(alloc, try o.toOwnedSlice(alloc)); // 4
+    }
+    {
+        var k: usize = 0;
+        while (k < num_pages) : (k += 1) {
+            var po: std.ArrayList(u8) = .empty;
+            errdefer po.deinit(alloc);
+            try po.appendSlice(alloc, "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> /XObject << /Im1 4 0 R >> >> /Contents ");
+            try appendInt(&po, alloc, 6 + 2 * k);
+            try po.appendSlice(alloc, " 0 R >>");
+            try objects.append(alloc, try po.toOwnedSlice(alloc));
+
+            var co: std.ArrayList(u8) = .empty;
+            errdefer co.deinit(alloc);
+            try co.appendSlice(alloc, "<< /Length ");
+            try appendInt(&co, alloc, contents.items[k].len);
+            try co.appendSlice(alloc, " >>\nstream\n");
+            try co.appendSlice(alloc, contents.items[k]);
+            try co.appendSlice(alloc, "endstream");
+            try objects.append(alloc, try co.toOwnedSlice(alloc));
+        }
+    }
 
     var buf: std.ArrayList(u8) = .empty;
     errdefer buf.deinit(alloc);
     try buf.appendSlice(alloc, "%PDF-1.4\n%\xe2\xe3\xcf\xd3\n");
-
-    var offsets: [6]usize = undefined;
-    var i: usize = 0;
-    while (i < 6) : (i += 1) {
-        offsets[i] = buf.items.len;
-        try appendInt(&buf, alloc, i + 1);
+    var offsets: std.ArrayList(usize) = .empty;
+    defer offsets.deinit(alloc);
+    for (objects.items, 0..) |obj, idx| {
+        try offsets.append(alloc, buf.items.len);
+        try appendInt(&buf, alloc, idx + 1);
         try buf.appendSlice(alloc, " 0 obj\n");
-        switch (i) {
-            0 => try buf.appendSlice(alloc, "<< /Type /Catalog /Pages 2 0 R >>"),
-            1 => try buf.appendSlice(alloc, "<< /Type /Pages /Kids [3 0 R] /Count 1 >>"),
-            2 => try buf.appendSlice(alloc, "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R >> /XObject << /Im1 5 0 R >> >> /Contents 6 0 R >>"),
-            3 => try buf.appendSlice(alloc, "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>"),
-            4 => {
-                try buf.appendSlice(alloc, "<< /Type /XObject /Subtype /Image /Width 240 /Height 160 /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ");
-                try appendInt(&buf, alloc, jpeg.len);
-                try buf.appendSlice(alloc, " >>\nstream\n");
-                try buf.appendSlice(alloc, jpeg);
-                try buf.appendSlice(alloc, "\nendstream");
-            },
-            5 => {
-                try buf.appendSlice(alloc, "<< /Length ");
-                try appendInt(&buf, alloc, content.items.len);
-                try buf.appendSlice(alloc, " >>\nstream\n");
-                try buf.appendSlice(alloc, content.items);
-                try buf.appendSlice(alloc, "endstream");
-            },
-            else => unreachable,
-        }
+        try buf.appendSlice(alloc, obj);
         try buf.appendSlice(alloc, "\nendobj\n");
     }
-
     const xref_off = buf.items.len;
-    try buf.appendSlice(alloc, "xref\n0 7\n0000000000 65535 f\r\n");
-    for (offsets) |off| {
+    const n = objects.items.len;
+    try buf.appendSlice(alloc, "xref\n0 ");
+    try appendInt(&buf, alloc, n + 1);
+    try buf.appendSlice(alloc, "\n0000000000 65535 f\r\n");
+    for (offsets.items) |off| {
         var tmp: [10]u8 = undefined;
         try buf.appendSlice(alloc, std.fmt.bufPrint(&tmp, "{d:0>10}", .{off}) catch unreachable);
         try buf.appendSlice(alloc, " 00000 n\r\n");
     }
-    try buf.appendSlice(alloc, "trailer\n<< /Size 7 /Root 1 0 R >>\nstartxref\n");
+    try buf.appendSlice(alloc, "trailer\n<< /Size ");
+    try appendInt(&buf, alloc, n + 1);
+    try buf.appendSlice(alloc, " /Root 1 0 R >>\nstartxref\n");
     try appendInt(&buf, alloc, xref_off);
     try buf.appendSlice(alloc, "\n%%EOF\n");
 
@@ -177,6 +262,11 @@ fn pdf(r: zap.Request) !void {
 }
 
 pub fn main() !void {
+    // Parse the embedded JSON once before zap forks its workers; the parsed data
+    // lives for the process lifetime (intentionally not freed).
+    const parsed = try std.json.parseFromSlice(Doc, std.heap.c_allocator, content_json, .{ .ignore_unknown_fields = true });
+    lines = parsed.value.lines;
+
     var app = App.init(std.heap.c_allocator);
     defer app.deinit();
 

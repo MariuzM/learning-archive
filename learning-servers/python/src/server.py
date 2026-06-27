@@ -1,3 +1,4 @@
+import json
 import os
 from pathlib import Path
 
@@ -8,38 +9,70 @@ from starlette.routing import Route
 
 BODY = "Hello from Python!\n"
 
-# Read the shared image once at startup; the per-request work is assembling the
-# PDF, not reading the file. 240x160 baseline JPEG, embedded via /DCTDecode.
-JPEG = (Path(__file__).resolve().parent.parent.parent / "assets" / "sample.jpg").read_bytes()
-IMG_W, IMG_H = 240, 160
+# Read the shared assets once at startup; the per-request work is assembling the
+# multi-page PDF, not reading the files.
+_ASSETS = Path(__file__).resolve().parent.parent.parent / "assets"
+JPEG = (_ASSETS / "sample.jpg").read_bytes()
+LINES = json.loads((_ASSETS / "content.json").read_text())["lines"]
+
+LINES_PER_PAGE = 45
+FONT_SIZE = 11
+LINE_STEP = 16
+TOP_Y = 740
 
 
-def build_pdf(text: str) -> bytes:
-    content = (
-        b"BT\n/F1 24 Tf\n72 720 Td\n(" + text.encode("latin-1") + b") Tj\nET\n"
+def build_pdf(heading: str) -> bytes:
+    # One cover page (heading + JPEG) then the JSON text paginated 45 lines/page.
+    contents = [
+        b"BT\n/F1 24 Tf\n72 720 Td\n(" + heading.encode("latin-1") + b") Tj\nET\n"
         b"q\n240 0 0 160 72 520 cm\n/Im1 Do\nQ\n"
-    )
-    objs = [
-        b"<< /Type /Catalog /Pages 2 0 R >>",
-        b"<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
-        b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] "
-        b"/Resources << /Font << /F1 4 0 R >> /XObject << /Im1 5 0 R >> >> /Contents 6 0 R >>",
-        b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
-        b"<< /Type /XObject /Subtype /Image /Width 240 /Height 160 /ColorSpace /DeviceRGB "
-        b"/BitsPerComponent 8 /Filter /DCTDecode /Length " + str(len(JPEG)).encode()
-        + b" >>\nstream\n" + JPEG + b"\nendstream",
-        b"<< /Length " + str(len(content)).encode() + b" >>\nstream\n" + content + b"endstream",
     ]
+    p = 0
+    while p * LINES_PER_PAGE < len(LINES):
+        chunk = LINES[p * LINES_PER_PAGE:(p + 1) * LINES_PER_PAGE]
+        s = bytearray(b"BT\n/F1 %d Tf\n72 %d Td\n" % (FONT_SIZE, TOP_Y))
+        for i, line in enumerate(chunk):
+            if i == 0:
+                s += b"(" + line.encode("latin-1") + b") Tj\n"
+            else:
+                s += b"0 -%d Td\n(" % LINE_STEP + line.encode("latin-1") + b") Tj\n"
+        s += b"ET\n"
+        contents.append(bytes(s))
+        p += 1
+    num_pages = len(contents)
+
+    objects = [b"<< /Type /Catalog /Pages 2 0 R >>"]  # 1
+    kids = b" ".join(b"%d 0 R" % (5 + 2 * i) for i in range(num_pages))
+    objects.append(b"<< /Type /Pages /Kids [" + kids + b"] /Count %d >>" % num_pages)  # 2
+    objects.append(b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>")  # 3
+    objects.append(
+        b"<< /Type /XObject /Subtype /Image /Width 240 /Height 160 /ColorSpace /DeviceRGB "
+        b"/BitsPerComponent 8 /Filter /DCTDecode /Length %d >>\nstream\n" % len(JPEG)
+        + JPEG + b"\nendstream"
+    )  # 4
+    for i in range(num_pages):
+        objects.append(
+            b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] "
+            b"/Resources << /Font << /F1 3 0 R >> /XObject << /Im1 4 0 R >> >> /Contents %d 0 R >>"
+            % (6 + 2 * i)
+        )
+        c = contents[i]
+        objects.append(b"<< /Length %d >>\nstream\n" % len(c) + c + b"endstream")
+
     buf = bytearray(b"%PDF-1.4\n%\xe2\xe3\xcf\xd3\n")
     offsets = []
-    for i, body in enumerate(objs, start=1):
+    for i, body in enumerate(objects, start=1):
         offsets.append(len(buf))
-        buf += str(i).encode() + b" 0 obj\n" + body + b"\nendobj\n"
+        buf += b"%d 0 obj\n" % i + body + b"\nendobj\n"
     xref_off = len(buf)
-    buf += b"xref\n0 7\n0000000000 65535 f\r\n"
+    n = len(objects)
+    buf += b"xref\n0 %d\n0000000000 65535 f\r\n" % (n + 1)
     for off in offsets:
-        buf += ("%010d 00000 n\r\n" % off).encode()
-    buf += b"trailer\n<< /Size 7 /Root 1 0 R >>\nstartxref\n" + str(xref_off).encode() + b"\n%%EOF\n"
+        buf += b"%010d 00000 n\r\n" % off
+    buf += (
+        b"trailer\n<< /Size " + str(n + 1).encode() + b" /Root 1 0 R >>\nstartxref\n"
+        + str(xref_off).encode() + b"\n%%EOF\n"
+    )
     return bytes(buf)
 
 
