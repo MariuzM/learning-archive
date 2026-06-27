@@ -36,6 +36,9 @@ the language-directory root. All of them load the one shared
 Then in another terminal:
 
 - `curl http://127.0.0.1:8080` — the `Hello from <language>!` text response.
+- `curl -X POST http://127.0.0.1:8080/validate -H 'content-type: application/json'
+  -d '{"username":"ada_lovelace","email":"ada@example.com","age":36,"password":"Secret123","website":"https://ada.dev","country":"US","tags":["math"],"items":[{"sku":"ABC-123","qty":2,"price":9.99}]}'`
+  — heavy nested request validation; returns `{"valid":true}` (200) or `{"valid":false}` (400).
 - `curl http://127.0.0.1:8080/pdf -o out.pdf` — a ~101-page PDF (a cover page
   with an embedded JPEG + 100 pages of text paginated from `assets/content.json`)
   **built from scratch on every request**. Every server parses the JSON once at
@@ -175,6 +178,48 @@ Takeaways:
   req/s the connection churn is slow enough not to exhaust ephemeral ports in
   the 8s window, so the PDF build cost is what's measured, same as everyone
   else.
+
+## Validation workload — incoming request validation
+
+`POST /validate` takes a realistic nested JSON body — a user/order payload with
+`username`/`email`/`sku` regex patterns, password complexity (upper+lower+digit),
+a 10-value country enum, number ranges, and an **array of nested objects** — and
+returns `{"valid":true}` (200) or `{"valid":false}` (400). Each server uses its
+language's best validation library, or a hand-written validator where none
+exists. Keep-alive POST, `wrk -t4`, 8s per level.
+
+| Language | Validator | @50 conc | p99 | @200 conc | p99 |
+|----------|-----------|---------:|----:|----------:|----:|
+| Jai (lib) | hand-rolled      | **169k** | 0.68ms | **169k** | 1.3ms |
+| Rust   | `garde` + serde     | 147k | 0.60ms | 156k | 4.5ms |
+| Odin   | hand-rolled         | 137k | 2.9ms  | 151k | 57ms  |
+| Zig    | hand-rolled         | 138k | 0.94ms | 144k | 2.1ms |
+| Nim    | hand-rolled         |  79k | 0.87ms |  77k | 3.4ms |
+| Node   | Fastify (AJV)       |  34k | 5.8ms  |  34k | 152ms |
+| Hono   | Zod                 |  34k | 5.5ms  |  34k | 144ms |
+| Elysia | TypeBox             |  35k | 5.4ms  |  33k | 114ms |
+| Python | Pydantic v2         |  34k | 5.4ms  |  33k | 122ms |
+| Jai    | hand-rolled         |  25k | 29ms   |  13k | 28ms  |
+
+The body is small (~250 bytes), so parse + validate is cheap and throughput is
+HTTP-stack-bound — the ranking mirrors the `Hello` benchmark more than the PDF
+one. Takeaways:
+
+- **Jai (lib)** is fastest (~169k, p99 1.3ms): the kqueue reactor plus a fixed,
+  hand-rolled parser/validator with no allocator churn. **Rust/garde**,
+  **Zig** and **Odin** follow at 144–156k — compiled validation is nearly free.
+- **The library choice barely matters within a runtime.** Node (AJV), Hono
+  (Zod), Elysia (TypeBox) and Python (Pydantic v2) all land at ~33–34k — four
+  different validators, same ceiling. At that point the per-request cost is the
+  JS/Python runtime, not the validator; all four libraries are "fast enough"
+  that they're not the bottleneck.
+- **The hand-written validators (Zig/Odin/Nim/Jai) beat every library here** —
+  not because they're cleverer, but because they're compiled and the schema is
+  fixed at build time. The library's value is ergonomics and maintainability
+  (one declarative schema, good error messages), not throughput.
+- **Odin** blows its tail again (57ms at 200) from the per-connection arena;
+  **Jai (hand-rolled)** is throttled by its no-keep-alive churn at this higher
+  request rate (25k → 13k as concurrency climbs).
 
 ## How each handles concurrency & shutdown
 
