@@ -15,7 +15,7 @@ pub fn main() !void {
     }
     defer c.SDL_Quit();
 
-    const window = c.SDL_CreateWindow("Learning Engine - Zig (milestone 1)", WIDTH, HEIGHT, 0) orelse {
+    const window = c.SDL_CreateWindow("Learning Engine - Zig (milestone 1)", WIDTH, HEIGHT, c.SDL_WINDOW_RESIZABLE) orelse {
         std.debug.print("SDL_CreateWindow failed: {s}\n", .{c.SDL_GetError()});
         return error.SDLWindow;
     };
@@ -29,6 +29,8 @@ pub fn main() !void {
 
     var pos = c.SDL_FPoint{ .x = 100, .y = 100 };
     var vel = c.SDL_FPoint{ .x = 220, .y = 170 };
+    var win_w: f32 = WIDTH;
+    var win_h: f32 = HEIGHT;
 
     var last: u64 = c.SDL_GetTicks();
     var quit = false;
@@ -44,18 +46,22 @@ pub fn main() !void {
                 c.SDL_EVENT_KEY_DOWN => {
                     if (event.key.scancode == c.SDL_SCANCODE_ESCAPE) quit = true;
                 },
+                c.SDL_EVENT_WINDOW_RESIZED => {
+                    win_w = @floatFromInt(event.window.data1);
+                    win_h = @floatFromInt(event.window.data2);
+                },
                 else => {},
             }
         }
 
-        simulate(&pos, &vel, dt);
+        simulate(&pos, &vel, dt, win_w, win_h);
         draw(renderer, pos);
 
         c.SDL_Delay(10);
     }
 }
 
-fn simulate(pos: *c.SDL_FPoint, vel: *c.SDL_FPoint, dt: f32) void {
+fn simulate(pos: *c.SDL_FPoint, vel: *c.SDL_FPoint, dt: f32, win_w: f32, win_h: f32) void {
     pos.x += vel.x * dt;
     pos.y += vel.y * dt;
 
@@ -67,8 +73,8 @@ fn simulate(pos: *c.SDL_FPoint, vel: *c.SDL_FPoint, dt: f32) void {
         pos.y = 0;
         vel.y = @abs(vel.y);
     }
-    const max_x = WIDTH - BOX_SIZE;
-    const max_y = HEIGHT - BOX_SIZE;
+    const max_x = win_w - BOX_SIZE;
+    const max_y = win_h - BOX_SIZE;
     if (pos.x > max_x) {
         pos.x = max_x;
         vel.x = -@abs(vel.x);

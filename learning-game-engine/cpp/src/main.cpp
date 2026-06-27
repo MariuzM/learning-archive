@@ -10,7 +10,7 @@ struct Box {
     float vx, vy;
 };
 
-static void simulate(Box& box, float dt) {
+static void simulate(Box& box, float dt, float win_w, float win_h) {
     box.x += box.vx * dt;
     box.y += box.vy * dt;
 
@@ -23,8 +23,8 @@ static void simulate(Box& box, float dt) {
         box.vy = std::fabs(box.vy);
     }
 
-    const float max_x = WIDTH - BOX_SIZE;
-    const float max_y = HEIGHT - BOX_SIZE;
+    const float max_x = win_w - BOX_SIZE;
+    const float max_y = win_h - BOX_SIZE;
     if (box.x > max_x) {
         box.x = max_x;
         box.vx = -std::fabs(box.vx);
@@ -52,7 +52,7 @@ int main() {
         return 1;
     }
 
-    SDL_Window* window = SDL_CreateWindow("Learning Engine - C++ (milestone 1)", WIDTH, HEIGHT, 0);
+    SDL_Window* window = SDL_CreateWindow("Learning Engine - C++ (milestone 1)", WIDTH, HEIGHT, SDL_WINDOW_RESIZABLE);
     if (!window) {
         SDL_Log("SDL_CreateWindow failed: %s", SDL_GetError());
         SDL_Quit();
@@ -68,6 +68,8 @@ int main() {
     }
 
     Box box{100, 100, 220, 170};
+    float win_w = WIDTH;
+    float win_h = HEIGHT;
 
     Uint64 last = SDL_GetTicks();
     bool quit = false;
@@ -82,10 +84,13 @@ int main() {
                 quit = true;
             } else if (event.type == SDL_EVENT_KEY_DOWN) {
                 if (event.key.scancode == SDL_SCANCODE_ESCAPE) quit = true;
+            } else if (event.type == SDL_EVENT_WINDOW_RESIZED) {
+                win_w = static_cast<float>(event.window.data1);
+                win_h = static_cast<float>(event.window.data2);
             }
         }
 
-        simulate(box, dt);
+        simulate(box, dt, win_w, win_h);
         draw(renderer, box);
 
         SDL_Delay(10);

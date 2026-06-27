@@ -24,8 +24,16 @@ the same surface area.
 
 ## Milestones
 
-1. **Window + game loop** — open a window, run a delta-timed loop, clear the
-   screen, draw a bouncing box, quit cleanly on `Esc`/close. ← *current*
+1. **Window + game loop** — open a *resizable* window, run a delta-timed loop,
+   clear the screen, draw a bouncing box (bounds follow the window size), quit
+   cleanly on `Esc`/close. ← *current*
+
+All three share one **logical 960×540 coordinate space** with identical game
+constants. SDL's 2D renderer already works in logical points, so Zig/C++ draw
+directly. Jai's `create_window` takes *pixels* and its renderer draws in the
+Retina backing, so Jai multiplies by `DPI_SCALE` (2× on this display) at window
+creation and draw time — keeping the on-screen size and the box's relative size
+identical across all three.
 2. **Sprites** — load a texture, draw a quad, FPS counter.
 3. **Input + movement** — keyboard/mouse, delta-time movement.
 4. **Entities** — a simple entity store, hundreds of moving sprites.
