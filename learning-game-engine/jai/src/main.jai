@@ -4,6 +4,30 @@ Input :: #import "Input";
 #import "Basic";
 #import "Math";
 
+#if OS == .MACOS {
+    #import "Objective_C";
+    #import "Objective_C/AppKit";
+
+    objc_send :: (recv: *void, sel: Selector) -> *void {
+        f :: #type (*void, Selector) -> *void #c_call;
+        return (cast(f) objc_msgSend)(recv, sel);
+    }
+    objc_send :: (recv: *void, sel: Selector, arg: *void) -> *void {
+        f :: #type (*void, Selector, *void) -> *void #c_call;
+        return (cast(f) objc_msgSend)(recv, sel, arg);
+    }
+
+    apply_system_appearance :: () {
+        defaults := objc_send(objc_getClass("NSUserDefaults"), selector("standardUserDefaults"));
+        style    := objc_send(defaults, selector("stringForKey:"), NSString.getTempString("AppleInterfaceStyle"));
+        is_dark  := style != null;
+
+        name       := NSString.getTempString(ifx is_dark then "NSAppearanceNameDarkAqua" else "NSAppearanceNameAqua");
+        appearance := objc_send(objc_getClass("NSAppearance"), selector("appearanceNamed:"), name);
+        objc_send(NSApp, selector("setAppearance:"), appearance);
+    }
+}
+
 WIDTH    :: 960.0;
 HEIGHT   :: 540.0;
 BOX_SIZE :: 80.0;
@@ -24,6 +48,11 @@ main :: () {
     }
 
     my_window = create_window(cast(s32)(WIDTH * DPI_SCALE), cast(s32)(HEIGHT * DPI_SCALE), "Learning Engine - Jai (milestone 1)", wanted_msaa = 4);
+
+    #if OS == .MACOS {
+        apply_system_appearance();
+    }
+
     Simp.prepare_window(my_window, wanted_msaa = 4);
     Simp.set_render_target(my_window, .LEFT_HANDED);
 
