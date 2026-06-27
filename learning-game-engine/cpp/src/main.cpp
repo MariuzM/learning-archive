@@ -41,15 +41,10 @@ static void simulate(Entity& e, float dt, float win_w, float win_h) {
     }
 }
 
-static void draw(SDL_Renderer* renderer, const Entity& e) {
-    SDL_SetRenderDrawColor(renderer, 26, 26, 31, 255);
-    SDL_RenderClear(renderer);
-
+static void draw_entity(SDL_Renderer* renderer, const Entity& e) {
     SDL_SetRenderDrawColor(renderer, e.color.r, e.color.g, e.color.b, e.color.a);
     SDL_FRect rect{e.x, e.y, e.size, e.size};
     SDL_RenderFillRect(renderer, &rect);
-
-    SDL_RenderPresent(renderer);
 }
 
 int main() {
@@ -75,6 +70,7 @@ int main() {
     }
 
     Entity player{100, 100, 220, 170, BOX_SIZE, {77, 166, 242, 255}};
+    Entity player2{500, 300, -180, 200, BOX_SIZE, {242, 140, 64, 255}};
     float win_w = WIDTH;
     float win_h = HEIGHT;
 
@@ -98,7 +94,13 @@ int main() {
         }
 
         simulate(player, dt, win_w, win_h);
-        draw(renderer, player);
+        simulate(player2, dt, win_w, win_h);
+
+        SDL_SetRenderDrawColor(renderer, 26, 26, 31, 255);
+        SDL_RenderClear(renderer);
+        draw_entity(renderer, player);
+        draw_entity(renderer, player2);
+        SDL_RenderPresent(renderer);
 
         SDL_Delay(10);
     }

@@ -42,6 +42,12 @@ pub fn main() !void {
         .size = BOX_SIZE,
         .color = .{ .r = 77, .g = 166, .b = 242, .a = 255 },
     };
+    var player2 = Entity{
+        .pos = .{ .x = 500, .y = 300 },
+        .vel = .{ .x = -180, .y = 200 },
+        .size = BOX_SIZE,
+        .color = .{ .r = 242, .g = 140, .b = 64, .a = 255 },
+    };
     var win_w: f32 = WIDTH;
     var win_h: f32 = HEIGHT;
 
@@ -68,7 +74,13 @@ pub fn main() !void {
         }
 
         simulate(&player, dt, win_w, win_h);
-        draw(renderer, player);
+        simulate(&player2, dt, win_w, win_h);
+
+        _ = c.SDL_SetRenderDrawColor(renderer, 26, 26, 31, 255);
+        _ = c.SDL_RenderClear(renderer);
+        drawEntity(renderer, player);
+        drawEntity(renderer, player2);
+        _ = c.SDL_RenderPresent(renderer);
 
         c.SDL_Delay(10);
     }
@@ -98,13 +110,8 @@ fn simulate(e: *Entity, dt: f32, win_w: f32, win_h: f32) void {
     }
 }
 
-fn draw(renderer: *c.SDL_Renderer, e: Entity) void {
-    _ = c.SDL_SetRenderDrawColor(renderer, 26, 26, 31, 255);
-    _ = c.SDL_RenderClear(renderer);
-
+fn drawEntity(renderer: *c.SDL_Renderer, e: Entity) void {
     _ = c.SDL_SetRenderDrawColor(renderer, e.color.r, e.color.g, e.color.b, e.color.a);
     const box = c.SDL_FRect{ .x = e.pos.x, .y = e.pos.y, .w = e.size, .h = e.size };
     _ = c.SDL_RenderFillRect(renderer, &box);
-
-    _ = c.SDL_RenderPresent(renderer);
 }

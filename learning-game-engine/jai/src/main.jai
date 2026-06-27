@@ -51,6 +51,13 @@ player := Entity.{
     color = .{0.30, 0.65, 0.95, 1},
 };
 
+player2 := Entity.{
+    pos   = .{500, 300},
+    vel   = .{-180, 200},
+    size  = BOX_SIZE,
+    color = .{0.95, 0.55, 0.25, 1},
+};
+
 main :: () {
     #if OS == .WINDOWS {
         Windows :: #import "Windows";
@@ -90,43 +97,38 @@ main :: () {
             if it.type == .KEYBOARD && it.key_pressed && it.key_code == .ESCAPE then quit = true;
         }
 
-        simulate(dt);
-        draw_one_frame();
+        simulate(*player,  dt, window_width, window_height);
+        simulate(*player2, dt, window_width, window_height);
+
+        Simp.clear_render_target(.10, .10, .12, 1);
+        Simp.set_shader_for_color();
+        draw_entity(player);
+        draw_entity(player2);
+        Simp.swap_buffers(my_window);
 
         sleep_milliseconds(10);
         reset_temporary_storage();
     }
 }
 
-simulate :: (dt: float) {
-    player.pos += player.vel * dt;
+simulate :: (e: *Entity, dt: float, win_w: float, win_h: float) {
+    e.pos += e.vel * dt;
 
-    if player.pos.x < 0 { player.pos.x = 0; player.vel.x = abs(player.vel.x); }
-    if player.pos.y < 0 { player.pos.y = 0; player.vel.y = abs(player.vel.y); }
+    if e.pos.x < 0 { e.pos.x = 0; e.vel.x = abs(e.vel.x); }
+    if e.pos.y < 0 { e.pos.y = 0; e.vel.y = abs(e.vel.y); }
 
-    max_x := window_width  - player.size;
-    max_y := window_height - player.size;
-    if player.pos.x > max_x { player.pos.x = max_x; player.vel.x = -abs(player.vel.x); }
-    if player.pos.y > max_y { player.pos.y = max_y; player.vel.y = -abs(player.vel.y); }
+    max_x := win_w - e.size;
+    max_y := win_h - e.size;
+    if e.pos.x > max_x { e.pos.x = max_x; e.vel.x = -abs(e.vel.x); }
+    if e.pos.y > max_y { e.pos.y = max_y; e.vel.y = -abs(e.vel.y); }
 }
 
-draw_one_frame :: () {
-    Simp.clear_render_target(.10, .10, .12, 1);
-    Simp.set_shader_for_color();
+draw_entity :: (e: Entity) {
+    x0 := e.pos.x * DPI_SCALE;
+    y0 := e.pos.y * DPI_SCALE;
+    x1 := (e.pos.x + e.size) * DPI_SCALE;
+    y1 := (e.pos.y + e.size) * DPI_SCALE;
 
-    x0 := player.pos.x * DPI_SCALE;
-    y0 := player.pos.y * DPI_SCALE;
-    x1 := (player.pos.x + player.size) * DPI_SCALE;
-    y1 := (player.pos.y + player.size) * DPI_SCALE;
-
-    Simp.immediate_quad(x0, y0, x1, y1, player.color);
-
-    Simp.swap_buffers(my_window);
+    Simp.immediate_quad(x0, y0, x1, y1, e.color);
 }
 
-#run {
-    #if OS == .WINDOWS {
-        WR :: #import "Windows_Resources";
-        WR.disable_runtime_console();
-    }
-}
