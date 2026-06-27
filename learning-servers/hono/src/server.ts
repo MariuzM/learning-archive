@@ -62,10 +62,13 @@ const app = new Hono();
 app.get("/", (c) => c.text("Hello from Hono!\n"));
 app.get("/hello", (c) => c.text("GET hello from Hono!\n"));
 app.post("/hello", (c) => c.text("POST hello from Hono!\n"));
-app.get("/pdf", (c) => {
-  c.header("content-type", "application/pdf");
-  return c.body(buildPdf("Hello from Hono! PDF benchmark."));
-});
+app.get(
+  "/pdf",
+  () =>
+    new Response(buildPdf("Hello from Hono! PDF benchmark."), {
+      headers: { "content-type": "application/pdf" },
+    }),
+);
 
 // Hono is runtime-agnostic; drive it with Bun.serve so we get a server handle
 // to stop on shutdown.
