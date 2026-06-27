@@ -37,8 +37,19 @@ my_window: Window_Type;
 window_width  := WIDTH;
 window_height := HEIGHT;
 
-box_pos := Vector2.{100, 100};
-box_vel := Vector2.{220, 170};
+Entity :: struct {
+    pos:   Vector2;
+    vel:   Vector2;
+    size:  float;
+    color: Vector4;
+}
+
+player := Entity.{
+    pos   = .{100, 100},
+    vel   = .{220, 170},
+    size  = BOX_SIZE,
+    color = .{0.30, 0.65, 0.95, 1},
+};
 
 main :: () {
     #if OS == .WINDOWS {
@@ -88,28 +99,27 @@ main :: () {
 }
 
 simulate :: (dt: float) {
-    box_pos += box_vel * dt;
+    player.pos += player.vel * dt;
 
-    if box_pos.x < 0 { box_pos.x = 0; box_vel.x = abs(box_vel.x); }
-    if box_pos.y < 0 { box_pos.y = 0; box_vel.y = abs(box_vel.y); }
+    if player.pos.x < 0 { player.pos.x = 0; player.vel.x = abs(player.vel.x); }
+    if player.pos.y < 0 { player.pos.y = 0; player.vel.y = abs(player.vel.y); }
 
-    max_x := window_width  - BOX_SIZE;
-    max_y := window_height - BOX_SIZE;
-    if box_pos.x > max_x { box_pos.x = max_x; box_vel.x = -abs(box_vel.x); }
-    if box_pos.y > max_y { box_pos.y = max_y; box_vel.y = -abs(box_vel.y); }
+    max_x := window_width  - player.size;
+    max_y := window_height - player.size;
+    if player.pos.x > max_x { player.pos.x = max_x; player.vel.x = -abs(player.vel.x); }
+    if player.pos.y > max_y { player.pos.y = max_y; player.vel.y = -abs(player.vel.y); }
 }
 
 draw_one_frame :: () {
     Simp.clear_render_target(.10, .10, .12, 1);
     Simp.set_shader_for_color();
 
-    x0 := box_pos.x * DPI_SCALE;
-    y0 := box_pos.y * DPI_SCALE;
-    x1 := (box_pos.x + BOX_SIZE) * DPI_SCALE;
-    y1 := (box_pos.y + BOX_SIZE) * DPI_SCALE;
+    x0 := player.pos.x * DPI_SCALE;
+    y0 := player.pos.y * DPI_SCALE;
+    x1 := (player.pos.x + player.size) * DPI_SCALE;
+    y1 := (player.pos.y + player.size) * DPI_SCALE;
 
-    color := Vector4.{0.30, 0.65, 0.95, 1};
-    Simp.immediate_quad(x0, y0, x1, y1, color);
+    Simp.immediate_quad(x0, y0, x1, y1, player.color);
 
     Simp.swap_buffers(my_window);
 }

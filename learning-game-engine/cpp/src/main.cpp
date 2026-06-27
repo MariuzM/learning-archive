@@ -5,42 +5,48 @@ static constexpr float WIDTH = 960;
 static constexpr float HEIGHT = 540;
 static constexpr float BOX_SIZE = 80;
 
-struct Box {
-    float x, y;
-    float vx, vy;
+struct Color {
+    Uint8 r, g, b, a;
 };
 
-static void simulate(Box& box, float dt, float win_w, float win_h) {
-    box.x += box.vx * dt;
-    box.y += box.vy * dt;
+struct Entity {
+    float x, y;
+    float vx, vy;
+    float size;
+    Color color;
+};
 
-    if (box.x < 0) {
-        box.x = 0;
-        box.vx = std::fabs(box.vx);
+static void simulate(Entity& e, float dt, float win_w, float win_h) {
+    e.x += e.vx * dt;
+    e.y += e.vy * dt;
+
+    if (e.x < 0) {
+        e.x = 0;
+        e.vx = std::fabs(e.vx);
     }
-    if (box.y < 0) {
-        box.y = 0;
-        box.vy = std::fabs(box.vy);
+    if (e.y < 0) {
+        e.y = 0;
+        e.vy = std::fabs(e.vy);
     }
 
-    const float max_x = win_w - BOX_SIZE;
-    const float max_y = win_h - BOX_SIZE;
-    if (box.x > max_x) {
-        box.x = max_x;
-        box.vx = -std::fabs(box.vx);
+    const float max_x = win_w - e.size;
+    const float max_y = win_h - e.size;
+    if (e.x > max_x) {
+        e.x = max_x;
+        e.vx = -std::fabs(e.vx);
     }
-    if (box.y > max_y) {
-        box.y = max_y;
-        box.vy = -std::fabs(box.vy);
+    if (e.y > max_y) {
+        e.y = max_y;
+        e.vy = -std::fabs(e.vy);
     }
 }
 
-static void draw(SDL_Renderer* renderer, const Box& box) {
+static void draw(SDL_Renderer* renderer, const Entity& e) {
     SDL_SetRenderDrawColor(renderer, 26, 26, 31, 255);
     SDL_RenderClear(renderer);
 
-    SDL_SetRenderDrawColor(renderer, 77, 166, 242, 255);
-    SDL_FRect rect{box.x, box.y, BOX_SIZE, BOX_SIZE};
+    SDL_SetRenderDrawColor(renderer, e.color.r, e.color.g, e.color.b, e.color.a);
+    SDL_FRect rect{e.x, e.y, e.size, e.size};
     SDL_RenderFillRect(renderer, &rect);
 
     SDL_RenderPresent(renderer);
@@ -68,7 +74,7 @@ int main() {
         return 1;
     }
 
-    Box box{100, 100, 220, 170};
+    Entity player{100, 100, 220, 170, BOX_SIZE, {77, 166, 242, 255}};
     float win_w = WIDTH;
     float win_h = HEIGHT;
 
@@ -91,8 +97,8 @@ int main() {
             }
         }
 
-        simulate(box, dt, win_w, win_h);
-        draw(renderer, box);
+        simulate(player, dt, win_w, win_h);
+        draw(renderer, player);
 
         SDL_Delay(10);
     }

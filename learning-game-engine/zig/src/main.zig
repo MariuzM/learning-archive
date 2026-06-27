@@ -8,6 +8,15 @@ const WIDTH: f32 = 960;
 const HEIGHT: f32 = 540;
 const BOX_SIZE: f32 = 80;
 
+const Color = struct { r: u8, g: u8, b: u8, a: u8 };
+
+const Entity = struct {
+    pos: c.SDL_FPoint,
+    vel: c.SDL_FPoint,
+    size: f32,
+    color: Color,
+};
+
 pub fn main() !void {
     if (!c.SDL_Init(c.SDL_INIT_VIDEO)) {
         std.debug.print("SDL_Init failed: {s}\n", .{c.SDL_GetError()});
@@ -27,8 +36,12 @@ pub fn main() !void {
     };
     defer c.SDL_DestroyRenderer(renderer);
 
-    var pos = c.SDL_FPoint{ .x = 100, .y = 100 };
-    var vel = c.SDL_FPoint{ .x = 220, .y = 170 };
+    var player = Entity{
+        .pos = .{ .x = 100, .y = 100 },
+        .vel = .{ .x = 220, .y = 170 },
+        .size = BOX_SIZE,
+        .color = .{ .r = 77, .g = 166, .b = 242, .a = 255 },
+    };
     var win_w: f32 = WIDTH;
     var win_h: f32 = HEIGHT;
 
@@ -54,43 +67,43 @@ pub fn main() !void {
             }
         }
 
-        simulate(&pos, &vel, dt, win_w, win_h);
-        draw(renderer, pos);
+        simulate(&player, dt, win_w, win_h);
+        draw(renderer, player);
 
         c.SDL_Delay(10);
     }
 }
 
-fn simulate(pos: *c.SDL_FPoint, vel: *c.SDL_FPoint, dt: f32, win_w: f32, win_h: f32) void {
-    pos.x += vel.x * dt;
-    pos.y += vel.y * dt;
+fn simulate(e: *Entity, dt: f32, win_w: f32, win_h: f32) void {
+    e.pos.x += e.vel.x * dt;
+    e.pos.y += e.vel.y * dt;
 
-    if (pos.x < 0) {
-        pos.x = 0;
-        vel.x = @abs(vel.x);
+    if (e.pos.x < 0) {
+        e.pos.x = 0;
+        e.vel.x = @abs(e.vel.x);
     }
-    if (pos.y < 0) {
-        pos.y = 0;
-        vel.y = @abs(vel.y);
+    if (e.pos.y < 0) {
+        e.pos.y = 0;
+        e.vel.y = @abs(e.vel.y);
     }
-    const max_x = win_w - BOX_SIZE;
-    const max_y = win_h - BOX_SIZE;
-    if (pos.x > max_x) {
-        pos.x = max_x;
-        vel.x = -@abs(vel.x);
+    const max_x = win_w - e.size;
+    const max_y = win_h - e.size;
+    if (e.pos.x > max_x) {
+        e.pos.x = max_x;
+        e.vel.x = -@abs(e.vel.x);
     }
-    if (pos.y > max_y) {
-        pos.y = max_y;
-        vel.y = -@abs(vel.y);
+    if (e.pos.y > max_y) {
+        e.pos.y = max_y;
+        e.vel.y = -@abs(e.vel.y);
     }
 }
 
-fn draw(renderer: *c.SDL_Renderer, pos: c.SDL_FPoint) void {
+fn draw(renderer: *c.SDL_Renderer, e: Entity) void {
     _ = c.SDL_SetRenderDrawColor(renderer, 26, 26, 31, 255);
     _ = c.SDL_RenderClear(renderer);
 
-    _ = c.SDL_SetRenderDrawColor(renderer, 77, 166, 242, 255);
-    const box = c.SDL_FRect{ .x = pos.x, .y = pos.y, .w = BOX_SIZE, .h = BOX_SIZE };
+    _ = c.SDL_SetRenderDrawColor(renderer, e.color.r, e.color.g, e.color.b, e.color.a);
+    const box = c.SDL_FRect{ .x = e.pos.x, .y = e.pos.y, .w = e.size, .h = e.size };
     _ = c.SDL_RenderFillRect(renderer, &box);
 
     _ = c.SDL_RenderPresent(renderer);
