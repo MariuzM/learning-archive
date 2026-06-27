@@ -43,10 +43,10 @@ identical across all three.
 
 ### Jai
 ```sh
-cd jai && jai build.jai && ./.build/main
+cd jai && jai build.jai && ./build/main
 ```
 `build.jai` is a compiler metaprogram that builds `jai/src/main.jai` against the
-native modules into `.build/main` (`Simp` emits its own linker flags, so no
+native modules into `build/main` (`Simp` emits its own linker flags, so no
 manual link step).
 
 ### Zig

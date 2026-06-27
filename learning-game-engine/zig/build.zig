@@ -20,7 +20,10 @@ pub fn build(b: *std.Build) void {
         .root_module = mod,
     });
 
-    b.installArtifact(exe);
+    const install = b.addInstallArtifact(exe, .{
+        .dest_dir = .{ .override = .{ .custom = "../build" } },
+    });
+    b.getInstallStep().dependOn(&install.step);
 
     const run_cmd = b.addRunArtifact(exe);
     run_cmd.step.dependOn(b.getInstallStep());

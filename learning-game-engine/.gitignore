@@ -2,16 +2,12 @@
 .DS_Store
 
 # Jai
-jai/.build/
-jai/src/.build/
+jai/build/
 
 # Zig
 zig/.zig-cache/
-zig/zig-out/
+zig/build/
 
 # C++
 cpp/build/
 cpp/vendor/
-cpp/game
-cpp/game_opt
-cpp/game_static

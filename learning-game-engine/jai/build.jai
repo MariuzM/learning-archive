@@ -7,7 +7,7 @@
 build :: () {
     set_build_options_dc(.{do_output = false});
 
-    out := tprint("%.build", #filepath);
+    out := tprint("%build", #filepath);
     make_directory_if_it_does_not_exist(out);
 
     w := compiler_create_workspace("Learning Engine - Jai");
