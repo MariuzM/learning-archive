@@ -10,4 +10,4 @@ run: game
 	./game
 
 clean:
-	rm -f game
+	rm -f game game_opt game_static

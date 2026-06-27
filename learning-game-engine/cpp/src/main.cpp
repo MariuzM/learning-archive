@@ -52,7 +52,8 @@ int main() {
         return 1;
     }
 
-    SDL_Window* window = SDL_CreateWindow("Learning Engine - C++ (milestone 1)", WIDTH, HEIGHT, SDL_WINDOW_RESIZABLE);
+    SDL_Window* window = SDL_CreateWindow("Learning Engine - C++ (milestone 1)",
+                                          WIDTH, HEIGHT, SDL_WINDOW_RESIZABLE);
     if (!window) {
         SDL_Log("SDL_CreateWindow failed: %s", SDL_GetError());
         SDL_Quit();

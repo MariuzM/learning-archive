@@ -13,3 +13,5 @@ zig/zig-out/
 cpp/build/
 cpp/vendor/
 cpp/game
+cpp/game_opt
+cpp/game_static
