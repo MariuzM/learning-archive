@@ -1,145 +1,105 @@
-Simp  :: #import "Simp";
-Input :: #import "Input";
-#import "Window_Creation";
 #import "Basic";
 #import "Math";
 
+#load "sdl3.jai";
 #load "utils/fps.jai";
-
-#if OS == .MACOS {
-    #import "Objective_C";
-    #import "Objective_C/AppKit";
-
-    objc_send :: (recv: *void, sel: Selector) -> *void {
-        f :: #type (*void, Selector) -> *void #c_call;
-        return (cast(f) objc_msgSend)(recv, sel);
-    }
-    objc_send :: (recv: *void, sel: Selector, arg: *void) -> *void {
-        f :: #type (*void, Selector, *void) -> *void #c_call;
-        return (cast(f) objc_msgSend)(recv, sel, arg);
-    }
-
-    apply_system_appearance :: () {
-        defaults := objc_send(objc_getClass("NSUserDefaults"), selector("standardUserDefaults"));
-        style    := objc_send(defaults, selector("stringForKey:"), NSString.getTempString("AppleInterfaceStyle"));
-        is_dark  := style != null;
-
-        name       := NSString.getTempString(ifx is_dark then "NSAppearanceNameDarkAqua" else "NSAppearanceNameAqua");
-        appearance := objc_send(objc_getClass("NSAppearance"), selector("appearanceNamed:"), name);
-        objc_send(NSApp, selector("setAppearance:"), appearance);
-    }
-}
 
 WIDTH    :: 960.0;
 HEIGHT   :: 540.0;
 BOX_SIZE :: 80.0;
-DPI_SCALE :: 2.0;
 
-my_window: Window_Type;
-window_width  := WIDTH;
-window_height := HEIGHT;
-
-font: *Simp.Dynamic_Font;
-fps_counter: Fps_Counter;
-
-Entity :: struct {
-    pos:   Vector2;
-    vel:   Vector2;
-    size:  float;
-    color: Vector4;
+Color :: struct {
+    r, g, b, a: u8;
 }
 
-player := Entity.{
-    pos   = .{100, 100},
-    vel   = .{220, 170},
-    size  = BOX_SIZE,
-    color = .{0.30, 0.65, 0.95, 1},
-};
-
-player2 := Entity.{
-    pos   = .{500, 300},
-    vel   = .{-180, 200},
-    size  = BOX_SIZE,
-    color = .{0.95, 0.55, 0.25, 1},
-};
+Entity :: struct {
+    x, y:   float;
+    vx, vy: float;
+    size:   float;
+    color:  Color;
+}
 
 main :: () {
-    #if OS == .WINDOWS {
-        Windows :: #import "Windows";
-        Windows.SetProcessDPIAware();
-        Windows.timeBeginPeriod(1);
+    if !SDL_Init(SDL_INIT_VIDEO) {
+        print("SDL_Init failed: %\n", to_string(SDL_GetError()));
+        return;
     }
+    defer SDL_Quit();
 
-    my_window = create_window(cast(s32)(WIDTH * DPI_SCALE), cast(s32)(HEIGHT * DPI_SCALE), "Learning Engine - Jai (milestone 1)", wanted_msaa = 4);
-
-    #if OS == .MACOS {
-        apply_system_appearance();
+    window := SDL_CreateWindow("Learning Engine - Jai (milestone 1)".data, xx WIDTH, xx HEIGHT, SDL_WINDOW_RESIZABLE);
+    if !window {
+        print("SDL_CreateWindow failed: %\n", to_string(SDL_GetError()));
+        return;
     }
+    defer SDL_DestroyWindow(window);
 
-    Simp.prepare_window(my_window, wanted_msaa = 4);
-    Simp.set_render_target(my_window, .LEFT_HANDED);
+    renderer := SDL_CreateRenderer(window, null);
+    if !renderer {
+        print("SDL_CreateRenderer failed: %\n", to_string(SDL_GetError()));
+        return;
+    }
+    defer SDL_DestroyRenderer(renderer);
 
-    font = Simp.get_font_at_size("../assets", "Karla-Regular.ttf", cast(int)(20 * DPI_SCALE));
-    assert(font != null);
+    player  := Entity.{100, 100,  220, 170, BOX_SIZE, .{ 77, 166, 242, 255}};
+    player2 := Entity.{500, 300, -180, 200, BOX_SIZE, .{242, 140,  64, 255}};
+    fps: Fps_Counter;
 
-    last_time := seconds_since_init();
+    win_w := WIDTH;
+    win_h := HEIGHT;
 
+    last := SDL_GetTicks();
     quit := false;
     while !quit {
-        now := seconds_since_init();
-        dt  := cast(float)(now - last_time);
-        last_time = now;
+        now := SDL_GetTicks();
+        dt  := cast(float)(now - last) / 1000.0;
+        last = now;
 
-        Input.update_window_events();
-
-        for Input.get_window_resizes() {
-            Simp.update_window(it.window);
-            if it.window == my_window {
-                window_width  = cast(float) it.width  / DPI_SCALE;
-                window_height = cast(float) it.height / DPI_SCALE;
+        event: SDL_Event;
+        while SDL_PollEvent(*event) {
+            if event.type == {
+                case SDL_EVENT_QUIT;           quit = true;
+                case SDL_EVENT_KEY_DOWN;       if event.key.scancode == SDL_SCANCODE_ESCAPE then quit = true;
+                case SDL_EVENT_WINDOW_RESIZED; win_w = cast(float) event.window.data1; win_h = cast(float) event.window.data2;
             }
         }
 
-        for Input.events_this_frame {
-            if it.type == .QUIT then quit = true;
-            if it.type == .KEYBOARD && it.key_pressed && it.key_code == .ESCAPE then quit = true;
-        }
+        simulate(*player,  dt, win_w, win_h);
+        simulate(*player2, dt, win_w, win_h);
 
-        simulate(*player,  dt, window_width, window_height);
-        simulate(*player2, dt, window_width, window_height);
+        SDL_SetRenderDrawColor(renderer, 26, 26, 31, 255);
+        SDL_RenderClear(renderer);
+        draw_entity(renderer, player);
+        draw_entity(renderer, player2);
+        draw_fps(*fps, renderer, dt);
+        SDL_RenderPresent(renderer);
 
-        Simp.clear_render_target(.10, .10, .12, 1);
-        Simp.set_shader_for_color();
-        draw_entity(player);
-        draw_entity(player2);
-
-        draw_fps(*fps_counter, dt);
-
-        Simp.swap_buffers(my_window);
-
-        sleep_milliseconds(10);
+        SDL_Delay(10);
         reset_temporary_storage();
     }
 }
 
 simulate :: (e: *Entity, dt: float, win_w: float, win_h: float) {
-    e.pos += e.vel * dt;
+    e.x += e.vx * dt;
+    e.y += e.vy * dt;
 
-    if e.pos.x < 0 { e.pos.x = 0; e.vel.x = abs(e.vel.x); }
-    if e.pos.y < 0 { e.pos.y = 0; e.vel.y = abs(e.vel.y); }
+    if e.x < 0 { e.x = 0; e.vx = abs(e.vx); }
+    if e.y < 0 { e.y = 0; e.vy = abs(e.vy); }
 
     max_x := win_w - e.size;
     max_y := win_h - e.size;
-    if e.pos.x > max_x { e.pos.x = max_x; e.vel.x = -abs(e.vel.x); }
-    if e.pos.y > max_y { e.pos.y = max_y; e.vel.y = -abs(e.vel.y); }
+    if e.x > max_x { e.x = max_x; e.vx = -abs(e.vx); }
+    if e.y > max_y { e.y = max_y; e.vy = -abs(e.vy); }
 }
 
-draw_entity :: (e: Entity) {
-    x0 := e.pos.x * DPI_SCALE;
-    y0 := e.pos.y * DPI_SCALE;
-    x1 := (e.pos.x + e.size) * DPI_SCALE;
-    y1 := (e.pos.y + e.size) * DPI_SCALE;
-
-    Simp.immediate_quad(x0, y0, x1, y1, e.color);
+draw_entity :: (renderer: *SDL_Renderer, e: Entity) {
+    SDL_SetRenderDrawColor(renderer, e.color.r, e.color.g, e.color.b, e.color.a);
+    rect := SDL_FRect.{e.x, e.y, e.size, e.size};
+    SDL_RenderFillRect(renderer, *rect);
 }
 
+#run {
+    #if OS == .WINDOWS {
+        WR :: #import "Windows_Resources";
+        WR.disable_runtime_console();
+    }
+}
