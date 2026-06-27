@@ -56,7 +56,7 @@ int main() {
     }
 
     SDL_Window* window = SDL_CreateWindow("Learning Engine - C++ (milestone 1)",
-                                          WIDTH, HEIGHT, SDL_WINDOW_RESIZABLE);
+                                          WIDTH, HEIGHT, SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIGH_PIXEL_DENSITY);
     if (!window) {
         SDL_Log("SDL_CreateWindow failed: %s", SDL_GetError());
         SDL_Quit();
@@ -71,9 +71,16 @@ int main() {
         return 1;
     }
 
+    const float scale = SDL_GetWindowPixelDensity(window);
+    SDL_SetRenderScale(renderer, scale, scale);
+
     Entity player{100, 100, 220, 170, BOX_SIZE, {77, 166, 242, 255}};
     Entity player2{500, 300, -180, 200, BOX_SIZE, {242, 140, 64, 255}};
     FpsCounter fps;
+    if (!fps.init("../assets/Karla-Regular.ttf", scale)) {
+        SDL_Log("Font load failed: %s", SDL_GetError());
+        return 1;
+    }
     float win_w = WIDTH;
     float win_h = HEIGHT;
 

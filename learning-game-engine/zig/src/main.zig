@@ -23,7 +23,7 @@ pub fn main() !void {
     }
     defer c.SDL_Quit();
 
-    const window = c.SDL_CreateWindow("Learning Engine - Zig (milestone 1)", WIDTH, HEIGHT, c.SDL_WINDOW_RESIZABLE) orelse {
+    const window = c.SDL_CreateWindow("Learning Engine - Zig (milestone 1)", WIDTH, HEIGHT, c.SDL_WINDOW_RESIZABLE | c.SDL_WINDOW_HIGH_PIXEL_DENSITY) orelse {
         std.debug.print("SDL_CreateWindow failed: {s}\n", .{c.SDL_GetError()});
         return error.SDLWindow;
     };
@@ -34,6 +34,9 @@ pub fn main() !void {
         return error.SDLRenderer;
     };
     defer c.SDL_DestroyRenderer(renderer);
+
+    const scale = c.SDL_GetWindowPixelDensity(window);
+    _ = c.SDL_SetRenderScale(renderer, scale, scale);
 
     var player = Entity{
         .pos = .{ .x = 100, .y = 100 },
@@ -51,6 +54,10 @@ pub fn main() !void {
     var win_h: f32 = HEIGHT;
 
     var fps = FpsCounter{};
+    if (!fps.init("../assets/Karla-Regular.ttf", scale)) {
+        std.debug.print("Font load failed: {s}\n", .{c.SDL_GetError()});
+        return error.FontLoad;
+    }
 
     var last: u64 = c.SDL_GetTicks();
     var quit = false;

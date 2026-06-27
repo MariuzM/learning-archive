@@ -26,7 +26,7 @@ main :: () {
     }
     defer SDL_Quit();
 
-    window := SDL_CreateWindow("Learning Engine - Jai (milestone 1)".data, xx WIDTH, xx HEIGHT, SDL_WINDOW_RESIZABLE);
+    window := SDL_CreateWindow("Learning Engine - Jai (milestone 1)".data, xx WIDTH, xx HEIGHT, SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIGH_PIXEL_DENSITY);
     if !window {
         print("SDL_CreateWindow failed: %\n", to_string(SDL_GetError()));
         return;
@@ -40,9 +40,17 @@ main :: () {
     }
     defer SDL_DestroyRenderer(renderer);
 
+    scale := SDL_GetWindowPixelDensity(window);
+    SDL_SetRenderScale(renderer, scale, scale);
+
     player  := Entity.{100, 100,  220, 170, BOX_SIZE, .{ 77, 166, 242, 255}};
     player2 := Entity.{500, 300, -180, 200, BOX_SIZE, .{242, 140,  64, 255}};
+
     fps: Fps_Counter;
+    if !init_fps(*fps, "../assets/Karla-Regular.ttf", scale) {
+        print("Font load failed: %\n", to_string(SDL_GetError()));
+        return;
+    }
 
     win_w := WIDTH;
     win_h := HEIGHT;

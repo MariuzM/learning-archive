@@ -10,15 +10,18 @@ All three drive **SDL3** so the comparison stays apples-to-apples — same windo
 (Metal on macOS), same event model — and the interesting differences are purely in how each language
 structures the code and binds to C:
 
-| Language | SDL3 binding                                          | External deps |
-| -------- | ----------------------------------------------------- | ------------- |
-| Jai      | hand-written `#foreign` bindings (`jai/src/sdl3.jai`) | SDL3          |
-| Zig      | `@cImport("SDL3/SDL.h")`                              | SDL3          |
-| C++      | `#include <SDL3/SDL.h>`                               | SDL3          |
+| Language | SDL3 binding                                          | External deps    |
+| -------- | ----------------------------------------------------- | ---------------- |
+| Jai      | hand-written `#foreign` bindings (`jai/src/sdl3.jai`) | SDL3, SDL3_ttf   |
+| Zig      | `@cImport("SDL3/SDL.h")`                              | SDL3, SDL3_ttf   |
+| C++      | `#include <SDL3/SDL.h>`                               | SDL3, SDL3_ttf   |
 
 Jai originally used its built-in `Window_Creation` + `Simp` + `Input` modules (no external deps),
 but `Simp` only has an OpenGL backend on macOS — deprecated and measurably slower than SDL's Metal
 renderer. The `Simp` version lives in git history if you want to compare.
+
+All three render the on-screen FPS counter with **SDL3_ttf** from the shared
+`assets/Karla-Regular.ttf` (SIL OFL), so the text looks identical everywhere.
 
 ## Milestones
 

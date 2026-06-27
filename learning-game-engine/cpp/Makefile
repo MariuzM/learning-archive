@@ -1,6 +1,6 @@
 CXX ?= c++
-SDL_CFLAGS := $(shell pkg-config --cflags sdl3)
-SDL_LIBS := $(shell pkg-config --libs sdl3)
+SDL_CFLAGS := $(shell pkg-config --cflags sdl3 sdl3-ttf)
+SDL_LIBS := $(shell pkg-config --libs sdl3 sdl3-ttf)
 CXXFLAGS := -std=c++17 -O2 -Wall $(SDL_CFLAGS)
 
 BUILD_DIR := build

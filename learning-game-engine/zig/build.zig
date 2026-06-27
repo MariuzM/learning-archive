@@ -13,6 +13,7 @@ pub fn build(b: *std.Build) void {
     mod.addIncludePath(.{ .cwd_relative = "/opt/homebrew/include" });
     mod.addLibraryPath(.{ .cwd_relative = "/opt/homebrew/lib" });
     mod.linkSystemLibrary("SDL3", .{});
+    mod.linkSystemLibrary("SDL3_ttf", .{});
     mod.addRPathSpecial("/opt/homebrew/lib");
 
     const exe = b.addExecutable(.{
