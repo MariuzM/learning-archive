@@ -36,10 +36,12 @@ the language-directory root. All of them load the one shared
 Then in another terminal:
 
 - `curl http://127.0.0.1:8080` — the `Hello from <language>!` text response.
-- `curl http://127.0.0.1:8080/pdf -o out.pdf` — a one-page PDF (heading text
-  + an embedded JPEG) **built from scratch on every request**. Every server
-  hand-assembles the same PDF bytes (objects, xref, `DCTDecode` image) with
-  no PDF library, so it doubles as a CPU-bound workload benchmark.
+- `curl http://127.0.0.1:8080/pdf -o out.pdf` — a ~101-page PDF (a cover page
+  with an embedded JPEG + 100 pages of text paginated from `assets/content.json`)
+  **built from scratch on every request**. Every server parses the JSON once at
+  startup, then hand-assembles the same multi-page PDF bytes (≈200 objects,
+  xref, `DCTDecode` image) with no PDF library, so it doubles as a heavy
+  CPU-bound workload benchmark.
 
 Press `Ctrl+C` (or `kill -TERM <pid>`) to watch each one shut down cleanly.
 
@@ -119,66 +121,60 @@ Takeaways:
 
 ## PDF workload — concurrency & latency
 
-The `/pdf` route is a heavier, CPU-bound task: every request hand-assembles
-a one-page PDF (heading text + a 240×160 JPEG embedded via `DCTDecode`,
-≈9.5 KB out). No PDF library in any language — the same byte layout built by
-hand, so it measures each runtime's allocation + byte-shuffling speed plus
-how its concurrency model holds up. Keep-alive, `wrk -t4`, 8s per level.
-Throughput is **PDFs built and served per second**; latency is per request.
+The `/pdf` route is now a genuinely heavy, CPU-bound task: every request
+hand-assembles a **~101-page PDF** — a cover page (heading + the 240×160
+`DCTDecode` JPEG) plus 100 pages of text paginated from `assets/content.json`
+(4500 lines), ≈400 KB out. No PDF library in any language: each server parses
+the JSON once at startup, then builds the same multi-page byte layout (≈200
+objects, an xref table, per-page content streams) by hand on every request.
+So this measures raw allocation + byte-shuffling throughput, not the HTTP
+stack. Keep-alive, `wrk -t4`, 8s per level. Throughput is **PDFs built and
+served per second**; latency is per request.
 
 | Language | @50 conc | p99 | @200 conc | p99 | @400 conc | p99 |
 |----------|---------:|----:|----------:|----:|----------:|----:|
-| Zig    | 153k | 0.45ms | 159k | 1.6ms | 161k | **3.0ms** |
-| Rust   | 143k | 0.60ms | 152k | 2.3ms | 155k | 4.6ms |
-| Jai (lib) | 111k | 0.97ms | 111k | 3.6ms | 107k | 7.7ms |
-| Odin | 136k | 3.7ms  | 149k | 44ms  | 150k | 52ms  |
-| Nim    |  80k | 0.78ms |  78k | 3.3ms |  78k | 6.8ms |
-| Python |  64k | 13ms   |  69k | 36ms  |  70k | 37ms |
-| Elysia | 63k | 1.5ms | 63k | 4.2ms | 64k | 7.9ms |
-| Hono   | 59k | 1.6ms | 59k | 3.9ms | 58k | 7.6ms |
-| Node   |  43k | 2.2ms  |  41k | 75ms  |  38k | **521ms** |
-| Jai |  23k | 28ms   |   — |  —    |   — |  —   |
+| Nim    | 11.8k | 6.1ms | 10.7k | 24ms  | **10.5k** | 388ms |
+| Rust   |  6.3k | 14ms  |  6.1k | 80ms  |   6.0k | **164ms** |
+| Zig    |  4.7k | 25ms  |  4.7k | 127ms |   4.7k | 667ms |
+| Odin   |  7.0k | 25ms  |  3.0k | 161ms |   2.6k | 538ms |
+| Node   |  1.9k | 254ms |  1.8k | 871ms |   1.8k | 544ms |
+| Elysia |  1.9k | 250ms |  1.8k | 870ms |   1.8k | 576ms |
+| Python |  1.8k | 268ms |  1.8k | 873ms |   1.8k | 554ms |
+| Jai (lib) | 1.9k | 244ms | 1.8k | 901ms | 1.8k | 552ms |
+| Jai    |  1.8k | 257ms |  1.8k | 895ms |   1.7k | 562ms |
+| Hono   |  1.9k | 255ms |  1.8k | 876ms |   1.5k | 620ms |
 
-So at **400 concurrent users**, Zig and Rust each build ~155–160k PDFs/sec
-with a p99 under 5ms; Nim sustains ~78k under 7ms; Python ~70k but with a
-fatter tail; Node's throughput holds around 40k but its p99 blows out to
-half a second.
+The 400 KB build dominates everything, so the ordering looks nothing like the
+tiny-`Hello` benchmark above. Two tiers emerge: the compiled servers
+(Nim, Rust, Zig, Odin) at 2.6–10.5k PDFs/sec, and everyone else — the JS/Bun
+runtimes, Python, and both Jai servers — bunched at **~1.8k**, because at that
+point the bottleneck is the same hand-rolled byte assembly, not the framework.
 
 Takeaways:
 
-- **Zig and Rust** are in a class of their own here — highest throughput,
-  and a p99 that barely moves as concurrency climbs. The compiled,
-  multi-threaded reactors absorb the per-request allocation cheaply.
-- **Jai (lib)** sits just behind them: ~110k PDFs/sec, flat across load, with
-  one of the tightest tails of the set (p99 7.7ms at 400 concurrent). The
-  kqueue reactor builds the same PDF bytes with almost no jitter — the clear
-  win of the keep-alive-only design when the workload is keep-alive.
-- **Odin** matches their *throughput* (~150k at 400 concurrent) but not their
-  *tail*: p99 climbs to ~44–52ms under load versus single-digit ms for
-  Zig/Rust. It builds PDFs as fast but the latency distribution is much
-  wider — `odin-http` allocates each request into a per-connection growing
-  arena, so a long keep-alive connection serving the heavy `/pdf` path keeps
-  expanding its arena, and that shows up in the tail.
-- **Nim/mummy** is the steady mid-tier: flat ~78k regardless of load with a
-  tight tail.
-- **Python** scales throughput well across its 10 workers but carries a
-  consistently higher tail (GIL + cross-process scheduling); fine when you
-  care about throughput, less so for p99-sensitive work.
-- **Elysia & Hono (Bun)** are the instructive contrast to Node: same
-  JavaScript, same single-event-loop model, same CPU-bound `Buffer` assembly —
-  but ~60k PDFs/sec with a p99 that stays under **8ms** at 400 concurrent,
-  where Node blows out to 521ms. Bun's faster `Buffer`/HTTP path and GC keep
-  the tail flat. Throughput sits near Python's, but with a far tighter
-  distribution. The two are within noise of each other (both over `Bun.serve`).
-- **Node** is the cautionary tale: a single event loop doing CPU-bound
-  buffer assembly plus GC means tail latency **detonates** under load (p99
-  521ms at 400 concurrent) even though median stays reasonable. You'd move
-  the PDF build to a `worker_threads` pool or `cluster` for real use — or, as
-  the Bun rows show, just change runtime.
-- **Jai** can't play this game: with no keep-alive, `/pdf` is pure
-  connection churn, so past ~50 concurrent it falls off the same TIME_WAIT
-  cliff as the hello benchmark (~220 req/s at 400). Its one honest number is
-  ~23k PDFs/sec at 50 concurrent.
+- **Nim/mummy** runs away with throughput here — ~10–12k PDFs/sec, roughly
+  double Rust. Its fixed thread pool draining one loop chews through the
+  per-request string building cheaply, and it stays flat as concurrency climbs
+  (the p99 only blows out at 400).
+- **Rust** trades throughput for the *tightest tail under load*: ~6k/sec but a
+  p99 of 164ms at 400 concurrent — the lowest of anyone at max load, and far
+  flatter than Zig or Nim. tokio's scheduler keeps latency predictable.
+- **Zig** holds a dead-flat ~4.7k across all concurrency levels, but its tail
+  detonates to 667ms at 400 — the prefork workers each block on a heavy build.
+- **Odin** is the one that *degrades*: 7.0k → 2.6k as load climbs. `odin-http`
+  allocates each request into a per-connection growing arena, and a 400 KB
+  build on every keep-alive request makes that arena balloon — exactly the
+  effect that was a minor tail issue on the 1-page workload, now dominant.
+- **The whole interpreted/JS tier collapses together at ~1.8k.** Node, Elysia,
+  Hono (all single-event-loop JS) and Python (10 GIL-bound workers) land within
+  noise of each other, with p99s of 0.5–0.9s — when one request ties up a core
+  for ~0.5ms of pure CPU, a single loop can't hide it. You'd offload the build
+  to a worker pool for real use.
+- **Both Jai servers** now post real numbers (~1.8k) and sit in that same tier.
+  The hand-rolled server's lack of keep-alive no longer sinks it: at ~1.8k
+  req/s the connection churn is slow enough not to exhaust ephemeral ports in
+  the 8s window, so the PDF build cost is what's measured, same as everyone
+  else.
 
 ## How each handles concurrency & shutdown
 
