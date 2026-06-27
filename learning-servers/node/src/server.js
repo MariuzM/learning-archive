@@ -3,7 +3,7 @@ import { fileURLToPath } from "node:url";
 import Fastify from "fastify";
 
 // Read the shared image once at startup; per-request work is assembling the PDF.
-const JPEG = readFileSync(fileURLToPath(new URL("../assets/sample.jpg", import.meta.url)));
+const JPEG = readFileSync(fileURLToPath(new URL("../../assets/sample.jpg", import.meta.url)));
 
 const HEADER = Buffer.from("%PDF-1.4\n%\xe2\xe3\xcf\xd3\n", "latin1");
 

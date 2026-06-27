@@ -1,0 +1,13 @@
+.build
+*.pdb
+*.exe
+*.dll
+*.manifest
+*.db
+*.lib
+*.suo
+LICENSE
+
+ignore/
+
+first

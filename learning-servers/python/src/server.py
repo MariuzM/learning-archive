@@ -10,7 +10,7 @@ BODY = "Hello from Python!\n"
 
 # Read the shared image once at startup; the per-request work is assembling the
 # PDF, not reading the file. 240x160 baseline JPEG, embedded via /DCTDecode.
-JPEG = (Path(__file__).resolve().parent.parent / "assets" / "sample.jpg").read_bytes()
+JPEG = (Path(__file__).resolve().parent.parent.parent / "assets" / "sample.jpg").read_bytes()
 IMG_W, IMG_H = 240, 160
 
 

@@ -12,7 +12,7 @@ QUEUE_CAP   :: 256;
 // the path holds no matter what directory the compiler is invoked from.
 JPEG :: #run read_asset();
 read_asset :: () -> string {
-    data, ok := read_entire_file(tprint("%/../assets/sample.jpg", #filepath));
+    data, ok := read_entire_file(tprint("%/../../assets/sample.jpg", #filepath));
     assert(ok, "could not read assets/sample.jpg at compile time");
     return data;
 }

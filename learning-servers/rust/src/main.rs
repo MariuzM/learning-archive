@@ -10,7 +10,7 @@ use tower_http::trace::TraceLayer;
 
 // Baked into the binary at compile time; per-request work is assembling the PDF.
 // 240x160 baseline JPEG, embedded via /DCTDecode.
-static JPEG: &[u8] = include_bytes!("../assets/sample.jpg");
+static JPEG: &[u8] = include_bytes!("../../assets/sample.jpg");
 
 async fn hello() -> &'static str {
     "Hello from Rust!\n"
@@ -76,8 +76,7 @@ async fn pdf() -> impl IntoResponse {
 async fn main() {
     tracing_subscriber::fmt()
         .with_env_filter(
-            tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| "info".into()),
+            tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| "info".into()),
         )
         .init();
 

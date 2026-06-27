@@ -1,6 +1,6 @@
 # Web Server Comparison
 
-The same HTTP server in six languages. Each listens on
+The same HTTP server, ten ways across seven languages. Each listens on
 `127.0.0.1:8080` and replies `Hello from <language>!` to every request.
 Each one is hardened past the textbook example: concurrent request
 handling, a full request read (not a single `read()`), per-connection
@@ -8,7 +8,15 @@ read/write timeouts, structured logging, and **graceful shutdown** on
 `SIGINT`/`SIGTERM`.
 
 Where a language has a production HTTP stack it is used; otherwise the
-server is built on the standard library and hardened by hand (Jai).
+server is built on the standard library and hardened by hand (Jai). Two
+languages get a second entry to compare stacks: Jai (hand-rolled vs the
+`farzher` library) and the Bun runtime (Elysia vs Hono, alongside
+Node/Fastify).
+
+Each server's hand-written source lives under `<lang>/src/`; build configs
+(`Cargo.toml`, `build.zig`, `package.json`, …) and vendored libraries stay at
+the language-directory root. All of them load the one shared
+`assets/sample.jpg`.
 
 ## Run each
 
@@ -16,10 +24,14 @@ server is built on the standard library and hardened by hand (Jai).
 |----------|-------------|------------|
 | Rust   | `cd rust && cargo run --release` | [`axum`](https://github.com/tokio-rs/axum) + `tokio` |
 | Zig    | `cd zig && zig build run` | [`zap`](https://github.com/zigzap/zap) (facil.io, prefork ×2) |
-| Nim    | `nimble install mummy && nim c -r --threads:on --mm:orc nim/main.nim` | [`mummy`](https://github.com/guzba/mummy) |
-| Node   | `cd node && bun install && node server.js` | [`fastify`](https://github.com/fastify/fastify) |
-| Python | `cd python && pip install -r requirements.txt && python server.py` | [`starlette`](https://www.starlette.io/) + [`uvicorn`](https://www.uvicorn.org/) (one worker/core) |
-| Jai    | `jai jai/main.jai -output_path /tmp && /tmp/main` | hand-rolled stdlib sockets |
+| Nim    | `nimble install mummy && nim c -r --threads:on --mm:orc nim/src/main.nim` | [`mummy`](https://github.com/guzba/mummy) |
+| Node   | `cd node && bun install && bun start` | [`fastify`](https://github.com/fastify/fastify) |
+| Elysia | `cd elysia && bun install && bun start` | [`elysia`](https://elysiajs.com/) (Bun) |
+| Hono   | `cd hono && bun install && bun start` | [`hono`](https://hono.dev/) (Bun.serve) |
+| Python | `cd python && pip install -r requirements.txt && python src/server.py` | [`starlette`](https://www.starlette.io/) + [`uvicorn`](https://www.uvicorn.org/) (one worker/core) |
+| Jai    | `jai jai/src/main.jai -output_path /tmp && /tmp/main` | hand-rolled stdlib sockets |
+| Jai (lib) | `mkdir -p /tmp/jf && jai jai/src/main_farzher.jai -release -output_path /tmp/jf && /tmp/jf/main_farzher` | [`farzher/Jai-HTTP-Server`](https://github.com/farzher/Jai-HTTP-Server) (kqueue, one loop/core) |
+| Odin   | `cd odin && git clone https://github.com/laytan/odin-http && odin run src -o:speed -out:odinserver` | [`odin-http`](https://github.com/laytan/odin-http) (`core:nbio`, one loop/core) |
 
 Then in another terminal:
 
@@ -46,41 +58,60 @@ machine — not absolute capacity.
 
 | Language | Stack | Keep-alive req/s | Conn-churn req/s | Graceful shutdown |
 |----------|-------|-----------------:|-----------------:|:-----------------:|
-| Rust   | axum + tokio                  | **162,000** | **24,300** | clean |
+| Jai (lib) | farzher (kqueue, 1 loop/core) | **171,000** |    n/a | clean |
+| Rust   | axum + tokio                  |     162,000 |     24,300 | clean |
 | Zig    | zap (prefork ×2)              |     160,000 |     21,700 | clean |
+| Odin   | odin-http (nbio, 1 loop/core) |     155,000 |     20,600 | clean |
+| Hono   | Bun.serve                     |     105,000 | **26,400** | clean |
+| Elysia | Bun.serve                     |     104,000 |     25,200 | clean |
 | Nim    | mummy                         |      89,900 |      6,500 | clean |
 | Python | Starlette + uvicorn (10 wkrs) |      77,900 |     24,100 | clean |
 | Node   | Fastify                       |      62,600 |      9,200 | clean |
-| Jai    | hand-rolled sockets           |      20,100\* |       280 | clean |
+| Jai    | hand-rolled sockets           |      20,100 |       280 | clean |
 
 Takeaways:
 
-- **Rust/axum** is the most well-rounded — top keep-alive *and* top churn,
-  with an orderly connection close that leaves `wrk` reporting zero socket
-  errors.
+- **Jai (lib)** posts the highest keep-alive number of the whole set (~171k)
+  — a tight kqueue reactor (one event loop per core, `TCP_NODELAY`, no
+  per-request logging or allocation beyond the response). But it only does
+  keep-alive: it ignores `Connection: close` and never closes the socket, so
+  there's no honest churn figure. Great at the one thing it does.
+- **Rust/axum** is the most well-rounded *compiled* stack — near-top on both
+  keep-alive and churn, with an orderly connection close that leaves `wrk`
+  reporting zero socket errors. Unlike Jai (lib) it actually closes
+  connections when asked.
 - **Zig/zap** is a hair behind Rust on keep-alive. Running two prefork
   worker processes (`workers = 2`) buys ~+38% connection-churn throughput
   for ~−7% keep-alive versus a single process — each worker `accept`s
   independently, which is what churn is bound by.
-- **Connection churn rewards independent `accept` paths.** The three
-  multi-process / task-per-connection stacks (Rust, Zig prefork, Python's
-  10 workers) all clear ~21–24k; the single-reactor stacks (Nim, Node) sit
-  lower even though their keep-alive numbers are healthy.
+- **Odin/odin-http** runs with the leaders on raw throughput — keep-alive
+  ~155k, churn ~21k — for the same reason as Zig prefork and Python: one
+  `nbio` event loop per core, each `accept`ing independently. Pure-Odin
+  stack, no C server underneath.
+- **Elysia & Hono (Bun)** are the surprise: ~105k keep-alive (well above
+  Node/Fastify's 63k — same language, different runtime) and the *highest
+  churn of the set*, ~25–26k. Bun is a single reactor, yet its `accept` path
+  is fast enough to top the multi-process stacks at churn. The two frameworks
+  are within noise of each other — both are thin layers over the same
+  `Bun.serve`, so this really measures Bun, not Elysia vs Hono.
+- **Connection churn rewards a fast `accept` path** — usually via independent
+  ones. The multi-process / multi-loop stacks (Rust, Zig prefork, Odin,
+  Python's 10 workers) all clear ~20–24k; Bun matches them with one reactor by
+  making `accept` cheap. The other single-reactor stacks (Nim, Node) sit lower
+  even though their keep-alive numbers are healthy.
 - **Python** went from the floor to genuinely competitive by running one
   uvicorn worker per core (`workers=os.cpu_count()`): keep-alive 13k → 78k
   and churn 0.9k → 24k versus a single worker. The GIL makes per-process
   scaling the only real lever.
-- **Nim/mummy** and **Node/Fastify** are solid mid-pack — great keep-alive,
-  moderate churn.
+- **Nim/mummy** is solid mid-pack — great keep-alive, moderate churn.
+  **Node/Fastify** trails the two Bun stacks at ~63k keep-alive: same JS, but
+  Node's HTTP server plus Fastify's per-request overhead cost it versus Bun.
 - **Jai** is the hand-rolled outlier. It has no keep-alive (it sends
   `Connection: close` on every response, so even the keep-alive column is
   really churn for it), and its fixed 8-worker mutex-queue collapses under
   fresh-connection load — ~280 req/s. Adding `TCP_NODELAY` helped latency
   but not churn, confirming the bottleneck is the single accept loop +
   queue handoff, not Nagle. Good for learning raw sockets; not production.
-
-\* Jai closes every connection, so its keep-alive figure is connection
-churn in disguise.
 
 > The `read N` socket errors `wrk` reports at the end of the churn test
 > (where `N` == connection count) are an artifact of the server closing
@@ -99,10 +130,14 @@ Throughput is **PDFs built and served per second**; latency is per request.
 |----------|---------:|----:|----------:|----:|----------:|----:|
 | Zig    | 153k | 0.45ms | 159k | 1.6ms | 161k | **3.0ms** |
 | Rust   | 143k | 0.60ms | 152k | 2.3ms | 155k | 4.6ms |
+| Jai (lib) | 111k | 0.97ms | 111k | 3.6ms | 107k | 7.7ms |
+| Odin | 136k | 3.7ms  | 149k | 44ms  | 150k | 52ms  |
 | Nim    |  80k | 0.78ms |  78k | 3.3ms |  78k | 6.8ms |
 | Python |  64k | 13ms   |  69k | 36ms  |  70k | 37ms |
+| Elysia | 63k | 1.5ms | 63k | 4.2ms | 64k | 7.9ms |
+| Hono   | 59k | 1.6ms | 59k | 3.9ms | 58k | 7.6ms |
 | Node   |  43k | 2.2ms  |  41k | 75ms  |  38k | **521ms** |
-| Jai\*\* |  23k | 28ms   |   — |  —    |   — |  —   |
+| Jai |  23k | 28ms   |   — |  —    |   — |  —   |
 
 So at **400 concurrent users**, Zig and Rust each build ~155–160k PDFs/sec
 with a p99 under 5ms; Nim sustains ~78k under 7ms; Python ~70k but with a
@@ -114,22 +149,36 @@ Takeaways:
 - **Zig and Rust** are in a class of their own here — highest throughput,
   and a p99 that barely moves as concurrency climbs. The compiled,
   multi-threaded reactors absorb the per-request allocation cheaply.
+- **Jai (lib)** sits just behind them: ~110k PDFs/sec, flat across load, with
+  one of the tightest tails of the set (p99 7.7ms at 400 concurrent). The
+  kqueue reactor builds the same PDF bytes with almost no jitter — the clear
+  win of the keep-alive-only design when the workload is keep-alive.
+- **Odin** matches their *throughput* (~150k at 400 concurrent) but not their
+  *tail*: p99 climbs to ~44–52ms under load versus single-digit ms for
+  Zig/Rust. It builds PDFs as fast but the latency distribution is much
+  wider — `odin-http` allocates each request into a per-connection growing
+  arena, so a long keep-alive connection serving the heavy `/pdf` path keeps
+  expanding its arena, and that shows up in the tail.
 - **Nim/mummy** is the steady mid-tier: flat ~78k regardless of load with a
   tight tail.
 - **Python** scales throughput well across its 10 workers but carries a
   consistently higher tail (GIL + cross-process scheduling); fine when you
   care about throughput, less so for p99-sensitive work.
+- **Elysia & Hono (Bun)** are the instructive contrast to Node: same
+  JavaScript, same single-event-loop model, same CPU-bound `Buffer` assembly —
+  but ~60k PDFs/sec with a p99 that stays under **8ms** at 400 concurrent,
+  where Node blows out to 521ms. Bun's faster `Buffer`/HTTP path and GC keep
+  the tail flat. Throughput sits near Python's, but with a far tighter
+  distribution. The two are within noise of each other (both over `Bun.serve`).
 - **Node** is the cautionary tale: a single event loop doing CPU-bound
   buffer assembly plus GC means tail latency **detonates** under load (p99
   521ms at 400 concurrent) even though median stays reasonable. You'd move
-  the PDF build to a `worker_threads` pool or `cluster` for real use.
+  the PDF build to a `worker_threads` pool or `cluster` for real use — or, as
+  the Bun rows show, just change runtime.
 - **Jai** can't play this game: with no keep-alive, `/pdf` is pure
   connection churn, so past ~50 concurrent it falls off the same TIME_WAIT
   cliff as the hello benchmark (~220 req/s at 400). Its one honest number is
   ~23k PDFs/sec at 50 concurrent.
-
-\*\* Jai has no keep-alive, so beyond ~50 concurrent connections it collapses
-to a few hundred req/s (connection churn, not PDF cost). Numbers omitted.
 
 ## How each handles concurrency & shutdown
 
@@ -151,6 +200,15 @@ to a few hundred req/s (connection churn, not PDF cost). Numbers omitted.
   async. `SIGINT`/`SIGTERM` call `app.close()` to stop accepting and drain
   in-flight requests. Per-request logging is disabled so it doesn't
   dominate latency under load.
+- **Elysia** — runs on Bun's native `Bun.serve` (a single fast event loop).
+  Routes are `.get`/`.post` chained on the `Elysia` instance; the `/pdf`
+  handler returns a `Response` wrapping the raw PDF bytes. `SIGINT`/`SIGTERM`
+  call `app.stop()` to drain before exiting.
+- **Hono** — a runtime-agnostic router whose `app.fetch` we hand to
+  `Bun.serve` directly, so we keep the server handle for `server.stop()` on
+  shutdown. Same `.get`/`.post` route shape; `/pdf` uses `c.body(bytes)` with
+  an `application/pdf` header. Nearly identical numbers to Elysia because both
+  are thin layers over the same Bun server.
 - **Python** — a `starlette` ASGI app served by `uvicorn` (with
   `httptools`/`uvloop`). Because a single ASGI worker is GIL-bound, it
   preforks one worker per core (`workers=os.cpu_count()`); uvicorn's
@@ -164,6 +222,24 @@ to a few hundred req/s (connection churn, not PDF cost). Numbers omitted.
   set by a `sigaction` handler. The server lives in `jai/lib.jai` (reusable
   API: `http_listen` + `http_run`); `jai/main.jai` just configures and runs
   it.
+- **Jai (lib)** — the same language via `farzher/Jai-HTTP-Server`, an
+  Express-style library (`http_listen` + `get`/`post`/`put`/`delete`). It
+  runs one event-loop thread per core (cores/2), each with its own `kqueue`
+  and all `accept`ing the shared listen socket — `TCP_NODELAY`, edge-free
+  level-triggered reads. The upstream library is Linux (epoll) + Windows
+  only; `jai/Jai-HTTP-Server/macos.jai` is a `kqueue` port written for this
+  repo (registered via `#if OS == .MACOS` in the library's `module.jai`).
+  Workers run under the main thread's context so the library's `tprint`-based
+  responder works. It has no graceful-drain hook, so `main_farzher.jai`
+  installs a `SIGINT`/`SIGTERM` handler that flips a flag and exits.
+- **Odin** — `odin-http`, a pure-Odin HTTP/1.1 stack over `core:nbio`. It
+  spins up one non-blocking event loop per core (`thread_count` defaults to
+  the core count), each accepting independently, so churn parallelizes the
+  way Zig's prefork and Python's workers do. Routing is `router_init` +
+  `route_get`/`route_post` (Lua-pattern paths), one handler per method per
+  path. `server_shutdown_on_interrupt` installs the `SIGINT`/`SIGTERM`
+  handlers and drains in-flight requests on each loop before
+  `listen_and_serve` returns.
 
 ## Caveats
 
@@ -185,3 +261,15 @@ to a few hundred req/s (connection churn, not PDF cost). Numbers omitted.
   build in `~/Dev/jai`.
 - **Zig**'s `zap` is `*nix`-only (facil.io). The `zig fetch`-pinned commit
   in `build.zig.zon` targets Zig **0.16.0**.
+- **Odin**'s `odin-http` is beta and vendored, not a package-managed dep:
+  `git clone` it into `odin/` (gitignored) before building. It's pure Odin
+  over `core:nbio` — only the *client* subpackage needs OpenSSL, so the
+  server here builds without it. Verified against the `dev-2026-06` nightly.
+- **Jai (lib)** is the most patched of the bunch. `farzher/Jai-HTTP-Server`
+  targets an old Jai (beta 0.1.090) and has no macOS path, so it's vendored
+  *with* fixes under `jai/Jai-HTTP-Server/`: a new `macos.jai` (kqueue), a
+  `.MACOS` socket overload in `modules/mysocket`, and a worker-context fix
+  for Jai's newer threading (`thread.starting_context` no longer copies
+  `print_style`, which broke the library's `tprint` responder). Verified
+  against Jai **beta 0.2.009**. Keep-alive only — it ignores `Connection:
+  close`. Linux/Windows still build from the upstream files unchanged.

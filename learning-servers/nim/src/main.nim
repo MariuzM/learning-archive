@@ -5,7 +5,7 @@ const body = "Hello from Nim!\n"
 
 # Baked into the binary at compile time; per-request work is assembling the PDF.
 # 240x160 baseline JPEG, embedded via /DCTDecode.
-const JPEG = staticRead("../assets/sample.jpg")
+const JPEG = staticRead("../../assets/sample.jpg")
 
 proc buildPdf(text: string): string =
   let content =
