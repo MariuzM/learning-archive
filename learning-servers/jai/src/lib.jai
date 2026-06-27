@@ -200,7 +200,8 @@ handle_client :: (server: *Http_Server, client: s32) {
         if has_header_end(buffer.data, total)  break;
     }
 
-    if str_eq(request_path(buffer.data, total), "/pdf") {
+    path := request_path(buffer.data, total);
+    if str_eq(path, "/pdf") {
         pdf := build_pdf(server.pdf_text);
         defer free(pdf.data);
 
@@ -212,9 +213,31 @@ handle_client :: (server: *Http_Server, client: s32) {
 
         send_all(client, to_string(header));
         send_all(client, pdf);
+    } else if str_eq(path, "/validate") {
+        if validate_payload(request_body(buffer.data, total)) {
+            send_all(client, "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: 14\r\nConnection: close\r\n\r\n{\"valid\":true}");
+        } else {
+            send_all(client, "HTTP/1.1 400 Bad Request\r\nContent-Type: application/json\r\nContent-Length: 15\r\nConnection: close\r\n\r\n{\"valid\":false}");
+        }
     } else {
         send_all(client, server.response);
     }
+}
+
+// The request body is whatever follows the blank line that ends the head.
+request_body :: (buf: *u8, n: int) -> string {
+    i := 0;
+    while i <= n - 4 {
+        if buf[i] == 13 && buf[i + 1] == 10 && buf[i + 2] == 13 && buf[i + 3] == 10 {
+            b: string = ---;
+            b.data = buf + i + 4;
+            b.count = n - (i + 4);
+            return b;
+        }
+        i += 1;
+    }
+    empty: string;
+    return empty;
 }
 
 // Parse the request-target out of "GET <path> HTTP/1.1", stopping at '?'.

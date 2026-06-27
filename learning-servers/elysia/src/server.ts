@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { Elysia } from "elysia";
+import { Elysia, t } from "elysia";
 
 // Read the shared assets once at startup; per-request work is assembling the PDF.
 const JPEG = readFileSync(fileURLToPath(new URL("../../assets/sample.jpg", import.meta.url)));
@@ -101,6 +101,33 @@ const app = new Elysia()
         headers: { "content-type": "application/pdf" },
       }),
   )
+  // Heavy, real-world incoming-request validation via Elysia's built-in TypeBox
+  // schema (compiled validators). Nested objects, an array of objects, regex
+  // patterns, an enum, and ranges — a bad body is rejected before the handler.
+  .post("/validate", () => ({ valid: true }), {
+    body: t.Object(
+      {
+        username: t.String({ minLength: 3, maxLength: 30, pattern: "^[a-z0-9_]+$" }),
+        email: t.String({ maxLength: 100, pattern: "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$" }),
+        age: t.Integer({ minimum: 13, maximum: 120 }),
+        password: t.String({ minLength: 8, maxLength: 100, pattern: "^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9]).+$" }),
+        website: t.String({ maxLength: 200, pattern: "^https?://" }),
+        country: t.Union(
+          ["US", "CA", "GB", "DE", "FR", "JP", "AU", "BR", "IN", "CN"].map((c) => t.Literal(c)),
+        ),
+        tags: t.Array(t.String({ minLength: 1, maxLength: 20 }), { minItems: 1, maxItems: 10 }),
+        items: t.Array(
+          t.Object({
+            sku: t.String({ pattern: "^[A-Z]{3}-[0-9]{3}$" }),
+            qty: t.Integer({ minimum: 1, maximum: 999 }),
+            price: t.Number({ minimum: 0, maximum: 100000 }),
+          }),
+          { minItems: 1, maxItems: 50 },
+        ),
+      },
+      { additionalProperties: false },
+    ),
+  })
   .listen({ port: 8080, hostname: "127.0.0.1" }, () =>
     console.log("listening on http://127.0.0.1:8080"),
   );

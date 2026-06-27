@@ -1,10 +1,12 @@
 import json
 import os
 from pathlib import Path
+from typing import Annotated, Literal
 
 import uvicorn
+from pydantic import BaseModel, ConfigDict, Field, StringConstraints, ValidationError, field_validator
 from starlette.applications import Starlette
-from starlette.responses import PlainTextResponse, Response
+from starlette.responses import JSONResponse, PlainTextResponse, Response
 from starlette.routing import Route
 
 BODY = "Hello from Python!\n"
@@ -76,6 +78,43 @@ def build_pdf(heading: str) -> bytes:
     return bytes(buf)
 
 
+# Heavy, real-world incoming-request validation via Pydantic v2 (its core is in
+# Rust). Nested models, an array of models, regex patterns, an enum, and ranges.
+class Item(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    sku: str = Field(pattern=r"^[A-Z]{3}-[0-9]{3}$")
+    qty: int = Field(ge=1, le=999)
+    price: float = Field(ge=0, le=100000)
+
+
+class Payload(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    username: str = Field(min_length=3, max_length=30, pattern=r"^[a-z0-9_]+$")
+    email: str = Field(max_length=100, pattern=r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+    age: int = Field(ge=13, le=120)
+    password: str = Field(min_length=8, max_length=100)
+    website: str = Field(max_length=200, pattern=r"^https?://")
+    country: Literal["US", "CA", "GB", "DE", "FR", "JP", "AU", "BR", "IN", "CN"]
+    tags: Annotated[list[Annotated[str, StringConstraints(min_length=1, max_length=20)]], Field(min_length=1, max_length=10)]
+    items: Annotated[list[Item], Field(min_length=1, max_length=50)]
+
+    # Pydantic v2's regex engine has no look-ahead, so check complexity directly.
+    @field_validator("password")
+    @classmethod
+    def password_complexity(cls, v: str) -> str:
+        if not (any(c.islower() for c in v) and any(c.isupper() for c in v) and any(c.isdigit() for c in v)):
+            raise ValueError("password must mix upper, lower, and digit")
+        return v
+
+
+async def validate(request):
+    try:
+        Payload.model_validate(await request.json())
+    except (ValidationError, ValueError):
+        return JSONResponse({"valid": False}, status_code=400)
+    return JSONResponse({"valid": True})
+
+
 async def hello(request):
     return PlainTextResponse(BODY)
 
@@ -84,7 +123,13 @@ async def pdf(request):
     return Response(build_pdf("Hello from Python! PDF benchmark."), media_type="application/pdf")
 
 
-app = Starlette(routes=[Route("/", hello), Route("/pdf", pdf)])
+app = Starlette(
+    routes=[
+        Route("/", hello),
+        Route("/pdf", pdf),
+        Route("/validate", validate, methods=["POST"]),
+    ]
+)
 
 
 if __name__ == "__main__":

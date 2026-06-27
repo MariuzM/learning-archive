@@ -1,6 +1,8 @@
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { Hono } from "hono";
+import { zValidator } from "@hono/zod-validator";
+import { z } from "zod";
 
 // Read the shared assets once at startup; per-request work is assembling the PDF.
 const JPEG = readFileSync(fileURLToPath(new URL("../../assets/sample.jpg", import.meta.url)));
@@ -100,6 +102,32 @@ app.get(
       headers: { "content-type": "application/pdf" },
     }),
 );
+
+// Heavy, real-world incoming-request validation via Zod (Hono's de-facto
+// validator). Nested objects, an array of objects, regex patterns, an enum, and
+// ranges — a bad body is rejected with 400 by the middleware before the handler.
+const validateBody = z
+  .object({
+    username: z.string().min(3).max(30).regex(/^[a-z0-9_]+$/),
+    email: z.string().max(100).regex(/^[^@\s]+@[^@\s]+\.[^@\s]+$/),
+    age: z.number().int().min(13).max(120),
+    password: z.string().min(8).max(100).regex(/[a-z]/).regex(/[A-Z]/).regex(/[0-9]/),
+    website: z.string().max(200).regex(/^https?:\/\//),
+    country: z.enum(["US", "CA", "GB", "DE", "FR", "JP", "AU", "BR", "IN", "CN"]),
+    tags: z.array(z.string().min(1).max(20)).min(1).max(10),
+    items: z
+      .array(
+        z.object({
+          sku: z.string().regex(/^[A-Z]{3}-[0-9]{3}$/),
+          qty: z.number().int().min(1).max(999),
+          price: z.number().min(0).max(100000),
+        }),
+      )
+      .min(1)
+      .max(50),
+  })
+  .strict();
+app.post("/validate", zValidator("json", validateBody), (c) => c.json({ valid: true }));
 
 // Hono is runtime-agnostic; drive it with Bun.serve so we get a server handle
 // to stop on shutdown.

@@ -1,9 +1,15 @@
 use std::sync::LazyLock;
 use std::time::Duration;
 
+use axum::extract::rejection::JsonRejection;
 use axum::http::{header, StatusCode};
 use axum::response::IntoResponse;
-use axum::{routing::get, Router};
+use axum::{
+    routing::{get, post},
+    Json, Router,
+};
+use garde::Validate;
+use serde::Deserialize;
 use tokio::net::TcpListener;
 use tokio::signal;
 use tower_http::timeout::TimeoutLayer;
@@ -124,6 +130,69 @@ async fn pdf() -> impl IntoResponse {
     )
 }
 
+// Heavy, real-world incoming-request validation via the `garde` crate (compiled
+// regexes, nested `dive`, per-element `inner`). serde does the structural parse
+// (typed fields + deny_unknown_fields); garde does the field constraints.
+#[derive(Deserialize, Validate)]
+#[serde(deny_unknown_fields)]
+struct Item {
+    #[garde(pattern(r"^[A-Z]{3}-[0-9]{3}$"))]
+    sku: String,
+    #[garde(range(min = 1, max = 999))]
+    qty: i64,
+    #[garde(range(min = 0.0, max = 100_000.0))]
+    price: f64,
+}
+
+#[derive(Deserialize, Validate)]
+#[serde(deny_unknown_fields)]
+struct Payload {
+    #[garde(length(min = 3, max = 30), pattern(r"^[a-z0-9_]+$"))]
+    username: String,
+    #[garde(length(max = 100), pattern(r"^[^@ ]+@[^@ ]+\.[^@ ]+$"))]
+    email: String,
+    #[garde(range(min = 13, max = 120))]
+    age: i64,
+    #[garde(length(min = 8, max = 100), custom(password_complexity))]
+    password: String,
+    #[garde(length(max = 200), pattern(r"^https?://"))]
+    website: String,
+    #[garde(custom(country_valid))]
+    country: String,
+    #[garde(length(min = 1, max = 10), inner(length(min = 1, max = 20)))]
+    tags: Vec<String>,
+    #[garde(length(min = 1, max = 50), dive)]
+    items: Vec<Item>,
+}
+
+fn password_complexity(v: &str, _: &()) -> garde::Result {
+    let lower = v.chars().any(|c| c.is_ascii_lowercase());
+    let upper = v.chars().any(|c| c.is_ascii_uppercase());
+    let digit = v.chars().any(|c| c.is_ascii_digit());
+    if lower && upper && digit {
+        Ok(())
+    } else {
+        Err(garde::Error::new("must mix upper, lower, and digit"))
+    }
+}
+
+fn country_valid(v: &str, _: &()) -> garde::Result {
+    const COUNTRIES: [&str; 10] = [
+        "US", "CA", "GB", "DE", "FR", "JP", "AU", "BR", "IN", "CN",
+    ];
+    if COUNTRIES.contains(&v) {
+        Ok(())
+    } else {
+        Err(garde::Error::new("unknown country"))
+    }
+}
+
+async fn validate(payload: Result<Json<Payload>, JsonRejection>) -> impl IntoResponse {
+    let ok = matches!(payload, Ok(Json(p)) if p.validate().is_ok());
+    let status = if ok { StatusCode::OK } else { StatusCode::BAD_REQUEST };
+    (status, Json(serde_json::json!({ "valid": ok })))
+}
+
 #[tokio::main]
 async fn main() {
     tracing_subscriber::fmt()
@@ -135,6 +204,7 @@ async fn main() {
     let app = Router::new()
         .route("/", get(hello))
         .route("/pdf", get(pdf))
+        .route("/validate", post(validate))
         .layer(TraceLayer::new_for_http())
         // Slow handlers get a 408 instead of tying up a connection forever.
         .layer(TimeoutLayer::with_status_code(

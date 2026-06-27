@@ -1,4 +1,5 @@
 #load "lib.jai";
+#load "validate.jai";
 
 PORT :: 8080;
 BODY :: "Hello from Jai!\n";

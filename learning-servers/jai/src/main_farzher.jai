@@ -2,6 +2,7 @@
 // The library ships Linux (epoll) + Windows only; macos.jai in the cloned repo
 // is a kqueue port added so it runs natively on macOS.
 #import,file "../Jai-HTTP-Server/module.jai";
+#load "validate.jai";
 
 #import "Basic";
 #import "File";
@@ -54,6 +55,13 @@ main :: () {
         pdf := build_pdf("Hello from Jai! PDF benchmark.");
         defer free(pdf.data);
         send_response(request, pdf, content_type = "application/pdf");
+    });
+    post("/validate", (request: *Request) {
+        if validate_payload(request.body) {
+            send_response(request, "{\"valid\":true}", content_type = "application/json");
+        } else {
+            send_response(request, "{\"valid\":false}", status_code = 400, content_type = "application/json");
+        }
     });
 
     print("listening on http://127.0.0.1:%\n", PORT);
