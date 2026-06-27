@@ -1,0 +1,15 @@
+# macOS
+.DS_Store
+
+# Jai
+jai/.build/
+jai/src/.build/
+
+# Zig
+zig/.zig-cache/
+zig/zig-out/
+
+# C++
+cpp/build/
+cpp/vendor/
+cpp/game
