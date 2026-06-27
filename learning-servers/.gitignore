@@ -32,4 +32,8 @@ jai/Jai-HTTP-Server/.build/
 odin/odin-http/
 odin/odinserver
 
+# C++
+cpp/vendor/
+cpp/server
+
 # Built server binaries dropped in /tmp are not tracked anyway

@@ -1,6 +1,6 @@
 # Web Server Comparison
 
-The same HTTP server, ten ways across seven languages. Each listens on
+The same HTTP server, eleven ways across eight languages. Each listens on
 `127.0.0.1:8080` and replies `Hello from <language>!` to every request.
 Each one is hardened past the textbook example: concurrent request
 handling, a full request read (not a single `read()`), per-connection
@@ -32,6 +32,7 @@ the language-directory root. All of them load the one shared
 | Jai    | `jai jai/src/main.jai -output_path /tmp && /tmp/main` | hand-rolled stdlib sockets |
 | Jai (lib) | `mkdir -p /tmp/jf && jai jai/src/main_farzher.jai -release -output_path /tmp/jf && /tmp/jf/main_farzher` | [`farzher/Jai-HTTP-Server`](https://github.com/farzher/Jai-HTTP-Server) (kqueue, one loop/core) |
 | Odin   | `cd odin && git clone https://github.com/laytan/odin-http && odin run src -o:speed -out:odinserver` | [`odin-http`](https://github.com/laytan/odin-http) (`core:nbio`, one loop/core) |
+| C++    | `cd cpp && make run` (fetch the two headers into `vendor/` first) | [`cpp-httplib`](https://github.com/yhirose/cpp-httplib) + [`nlohmann/json`](https://github.com/nlohmann/json) (thread pool) |
 
 Then in another terminal:
 
@@ -71,6 +72,7 @@ machine — not absolute capacity.
 | Elysia | Bun.serve                     |     104,000 |     25,200 | clean |
 | Nim    | mummy                         |      89,900 |      6,500 | clean |
 | Python | Starlette + uvicorn (10 wkrs) |      77,900 |     24,100 | clean |
+| C++    | cpp-httplib (thread pool)     |      74,300 |     25,700 | clean |
 | Node   | Fastify                       |      62,600 |      9,200 | clean |
 | Jai    | hand-rolled sockets           |      20,100 |       280 | clean |
 
@@ -138,6 +140,7 @@ served per second**; latency is per request.
 |----------|---------:|----:|----------:|----:|----------:|----:|
 | Nim    | 11.8k | 6.1ms | 10.7k | 24ms  | **10.5k** | 388ms |
 | Rust   |  6.3k | 14ms  |  6.1k | 80ms  |   6.0k | **164ms** |
+| C++    |  6.8k | 568ms |  6.8k | 1.5s  |     — | —     |
 | Zig    |  4.7k | 25ms  |  4.7k | 127ms |   4.7k | 667ms |
 | Odin   |  7.0k | 25ms  |  3.0k | 161ms |   2.6k | 538ms |
 | Node   |  1.9k | 254ms |  1.8k | 871ms |   1.8k | 544ms |
@@ -164,6 +167,11 @@ Takeaways:
   flatter than Zig or Nim. tokio's scheduler keeps latency predictable.
 - **Zig** holds a dead-flat ~4.7k across all concurrency levels, but its tail
   detonates to 667ms at 400 — the prefork workers each block on a heavy build.
+- **C++** has the split personality: compiled-tier *throughput* (~6.8k, flat)
+  but the *worst tail of the lot* — p99 568ms at 50, 1.5s at 200. cpp-httplib's
+  thread pool is small (≈cores−1) and each thread blocks for the whole 400 KB
+  build, so the queue behind those threads is what the tail measures. Raising
+  `CPPHTTPLIB_THREAD_POOL_COUNT` would trade memory for a flatter tail.
 - **Odin** is the one that *degrades*: 7.0k → 2.6k as load climbs. `odin-http`
   allocates each request into a per-connection growing arena, and a 400 KB
   build on every keep-alive request makes that arena balloon — exactly the
@@ -195,6 +203,7 @@ exists. Keep-alive POST, `wrk -t4`, 8s per level.
 | Odin   | hand-rolled         | 137k | 2.9ms  | 151k | 57ms  |
 | Zig    | hand-rolled         | 138k | 0.94ms | 144k | 2.1ms |
 | Nim    | hand-rolled         |  79k | 0.87ms |  77k | 3.4ms |
+| C++    | nlohmann + std::regex |  73k | 52ms |  72k | 197ms |
 | Node   | Fastify (AJV)       |  34k | 5.8ms  |  34k | 152ms |
 | Hono   | Zod                 |  34k | 5.5ms  |  34k | 144ms |
 | Elysia | TypeBox             |  35k | 5.4ms  |  33k | 114ms |
@@ -220,6 +229,10 @@ one. Takeaways:
 - **Odin** blows its tail again (57ms at 200) from the per-connection arena;
   **Jai (hand-rolled)** is throttled by its no-keep-alive churn at this higher
   request rate (25k → 13k as concurrency climbs).
+- **C++** sits apart: ~72k throughput (2× the JS/Python tier) but a much fatter
+  tail (52–197ms) than the other compiled servers. `std::regex` is genuinely
+  slow to execute, and the small cpp-httplib thread pool queues requests behind
+  it — fast in aggregate, jittery per request.
 
 ## How each handles concurrency & shutdown
 
@@ -281,6 +294,13 @@ one. Takeaways:
   path. `server_shutdown_on_interrupt` installs the `SIGINT`/`SIGTERM`
   handlers and drains in-flight requests on each loop before
   `listen_and_serve` returns.
+- **C++** — `cpp-httplib`, a header-only server that runs a fixed thread pool
+  (≈cores−1), one connection per pool thread with keep-alive. Routing is
+  `svr.Get`/`svr.Post`; `nlohmann/json` parses the `/pdf` content and the
+  `/validate` body, with `std::regex` for the field patterns. A `SIGINT`/
+  `SIGTERM` handler calls `svr.stop()` to unblock `listen()` and drain. Both
+  headers are vendored into `cpp/vendor/` (fetched, gitignored); build with
+  `make`. Assets are loaded at startup relative to the executable.
 
 ## Caveats
 
@@ -314,3 +334,10 @@ one. Takeaways:
   `print_style`, which broke the library's `tprint` responder). Verified
   against Jai **beta 0.2.009**. Keep-alive only — it ignores `Connection:
   close`. Linux/Windows still build from the upstream files unchanged.
+- **C++** vendors two single headers into `cpp/vendor/` (gitignored), fetched
+  from [cpp-httplib](https://github.com/yhirose/cpp-httplib) v0.18.3 and
+  [nlohmann/json](https://github.com/nlohmann/json) v3.11.3 — re-download them
+  before building. `std::regex` is the throughput ceiling on `/validate`, and
+  the fixed thread pool gives it the worst `/pdf` tail of the set; both are the
+  obvious things to swap (RE2/`ctre`, a bigger or work-stealing pool) for real
+  use. Built with `make` against Apple clang 17 (`-std=c++17`).
