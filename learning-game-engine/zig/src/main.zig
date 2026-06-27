@@ -1,8 +1,7 @@
 const std = @import("std");
 
-const c = @cImport({
-    @cInclude("SDL3/SDL.h");
-});
+const c = @import("sdl.zig").c;
+const FpsCounter = @import("utils/fps.zig").FpsCounter;
 
 const WIDTH: f32 = 960;
 const HEIGHT: f32 = 540;
@@ -51,6 +50,8 @@ pub fn main() !void {
     var win_w: f32 = WIDTH;
     var win_h: f32 = HEIGHT;
 
+    var fps = FpsCounter{};
+
     var last: u64 = c.SDL_GetTicks();
     var quit = false;
     while (!quit) {
@@ -80,6 +81,7 @@ pub fn main() !void {
         _ = c.SDL_RenderClear(renderer);
         drawEntity(renderer, player);
         drawEntity(renderer, player2);
+        fps.draw(renderer, dt);
         _ = c.SDL_RenderPresent(renderer);
 
         c.SDL_Delay(10);

@@ -1,6 +1,8 @@
 #include <SDL3/SDL.h>
 #include <cmath>
 
+#include "utils/fps.hpp"
+
 static constexpr float WIDTH = 960;
 static constexpr float HEIGHT = 540;
 static constexpr float BOX_SIZE = 80;
@@ -71,6 +73,7 @@ int main() {
 
     Entity player{100, 100, 220, 170, BOX_SIZE, {77, 166, 242, 255}};
     Entity player2{500, 300, -180, 200, BOX_SIZE, {242, 140, 64, 255}};
+    FpsCounter fps;
     float win_w = WIDTH;
     float win_h = HEIGHT;
 
@@ -100,6 +103,7 @@ int main() {
         SDL_RenderClear(renderer);
         draw_entity(renderer, player);
         draw_entity(renderer, player2);
+        fps.draw(renderer, dt);
         SDL_RenderPresent(renderer);
 
         SDL_Delay(10);

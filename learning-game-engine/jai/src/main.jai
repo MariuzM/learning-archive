@@ -4,6 +4,8 @@ Input :: #import "Input";
 #import "Basic";
 #import "Math";
 
+#load "utils/fps.jai";
+
 #if OS == .MACOS {
     #import "Objective_C";
     #import "Objective_C/AppKit";
@@ -36,6 +38,9 @@ DPI_SCALE :: 2.0;
 my_window: Window_Type;
 window_width  := WIDTH;
 window_height := HEIGHT;
+
+font: *Simp.Dynamic_Font;
+fps_counter: Fps_Counter;
 
 Entity :: struct {
     pos:   Vector2;
@@ -74,6 +79,9 @@ main :: () {
     Simp.prepare_window(my_window, wanted_msaa = 4);
     Simp.set_render_target(my_window, .LEFT_HANDED);
 
+    font = Simp.get_font_at_size("../assets", "Karla-Regular.ttf", cast(int)(20 * DPI_SCALE));
+    assert(font != null);
+
     last_time := seconds_since_init();
 
     quit := false;
@@ -104,6 +112,9 @@ main :: () {
         Simp.set_shader_for_color();
         draw_entity(player);
         draw_entity(player2);
+
+        draw_fps(*fps_counter, dt);
+
         Simp.swap_buffers(my_window);
 
         sleep_milliseconds(10);
