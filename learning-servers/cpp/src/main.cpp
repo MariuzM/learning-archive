@@ -2,6 +2,8 @@
 
 #include <drogon/drogon.h>
 
+#include <array>
+#include <cstdint>
 #include <cstdio>
 #include <filesystem>
 #include <fstream>
@@ -11,6 +13,7 @@
 #include <set>
 #include <sstream>
 #include <string>
+#include <string_view>
 #include <vector>
 
 using json = nlohmann::json;
@@ -33,10 +36,12 @@ static std::string read_file(const std::filesystem::path& p) {
     return ss.str();
 }
 
-static std::string build_pdf(const std::string& heading) {
+static std::string build_pdf(std::string_view heading) {
     std::vector<std::string> contents;
-    contents.push_back("BT\n/F1 24 Tf\n72 720 Td\n(" + heading +
-                       ") Tj\nET\nq\n240 0 0 160 72 520 cm\n/Im1 Do\nQ\n");
+    std::string cover = "BT\n/F1 24 Tf\n72 720 Td\n(";
+    cover += heading;
+    cover += ") Tj\nET\nq\n240 0 0 160 72 520 cm\n/Im1 Do\nQ\n";
+    contents.push_back(std::move(cover));
 
     for (size_t p = 0; p * LINES_PER_PAGE < LINES.size(); ++p) {
         std::string s = "BT\n/F1 " + std::to_string(FONT_SIZE) + " Tf\n72 " +
@@ -95,9 +100,9 @@ static std::string build_pdf(const std::string& heading) {
     size_t n = objects.size();
     buf += "xref\n0 " + std::to_string(n + 1) + "\n0000000000 65535 f\r\n";
     for (size_t off : offsets) {
-        char tmp[16];
-        std::snprintf(tmp, sizeof(tmp), "%010zu", off);
-        buf += tmp;
+        std::array<char, 16> tmp;
+        std::snprintf(tmp.data(), tmp.size(), "%010zu", off);
+        buf += tmp.data();
         buf += " 00000 n\r\n";
     }
     buf += "trailer\n<< /Size " + std::to_string(n + 1) +
@@ -113,7 +118,7 @@ static const std::regex RE_WEBSITE(R"(^https?://)");
 static const std::set<std::string> COUNTRIES = {"US", "CA", "GB", "DE", "FR",
                                                 "JP", "AU", "BR", "IN", "CN"};
 
-static bool password_ok(const std::string& s) {
+static bool password_ok(std::string_view s) {
     bool lo = false, up = false, di = false;
     for (char c : s) {
         if (c >= 'a' && c <= 'z')
@@ -150,7 +155,7 @@ static bool validate_payload(const json& j) {
 
     if (!j["age"].is_number_integer())
         return false;
-    long age = j["age"];
+    int64_t age = j["age"];
     if (age < 13 || age > 120)
         return false;
 
@@ -194,7 +199,7 @@ static bool validate_payload(const json& j) {
             return false;
         if (!it["qty"].is_number_integer())
             return false;
-        long qty = it["qty"];
+        int64_t qty = it["qty"];
         if (qty < 1 || qty > 999)
             return false;
         if (!it["price"].is_number())
@@ -246,12 +251,18 @@ class App {
     }
 };
 
-static HttpResponsePtr text(const std::string& body) {
+static HttpResponsePtr respond(drogon::HttpStatusCode status, drogon::ContentType ctype,
+                               std::string_view ctstr, std::string body) {
     auto res = HttpResponse::newHttpResponse();
-    res->setContentTypeCodeAndCustomString(drogon::CT_TEXT_PLAIN,
-                                           "content-type: text/plain; charset=utf-8\r\n");
-    res->setBody(body);
+    res->setStatusCode(status);
+    res->setContentTypeCodeAndCustomString(ctype, ctstr);
+    res->setBody(std::move(body));
     return res;
+}
+
+static HttpResponsePtr text(std::string_view body) {
+    return respond(drogon::k200OK, drogon::CT_TEXT_PLAIN,
+                   "content-type: text/plain; charset=utf-8\r\n", std::string(body));
 }
 
 int main(int, char** argv) {
@@ -276,11 +287,9 @@ int main(int, char** argv) {
         cb(text("POST hello from C++!\n"));
     });
     app.get("/pdf", [](const HttpRequestPtr&, App::Callback&& cb) {
-        auto res = HttpResponse::newHttpResponse();
-        res->setContentTypeCodeAndCustomString(
-            drogon::CT_CUSTOM, "content-type: application/pdf\r\n");
-        res->setBody(build_pdf("Hello from C++! PDF benchmark."));
-        cb(res);
+        cb(respond(drogon::k200OK, drogon::CT_CUSTOM,
+                   "content-type: application/pdf\r\n",
+                   build_pdf("Hello from C++! PDF benchmark.")));
     });
     app.post("/validate", [](const HttpRequestPtr& req, App::Callback&& cb) {
         bool ok = false;
@@ -289,12 +298,9 @@ int main(int, char** argv) {
         } catch (...) {
             ok = false;
         }
-        auto res = HttpResponse::newHttpResponse();
-        res->setStatusCode(ok ? drogon::k200OK : drogon::k400BadRequest);
-        res->setContentTypeCodeAndCustomString(
-            drogon::CT_APPLICATION_JSON, "content-type: application/json\r\n");
-        res->setBody(ok ? "{\"valid\":true}" : "{\"valid\":false}");
-        cb(res);
+        cb(respond(ok ? drogon::k200OK : drogon::k400BadRequest, drogon::CT_APPLICATION_JSON,
+                   "content-type: application/json\r\n",
+                   ok ? "{\"valid\":true}" : "{\"valid\":false}"));
     });
 
     app.listen("127.0.0.1", 8080);
