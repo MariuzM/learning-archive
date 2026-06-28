@@ -4,10 +4,6 @@
 # Jai
 jai/build/
 
-# Zig
-zig/.zig-cache/
-zig/build/
-
 # C++
 cpp/build/
 cpp/vendor/

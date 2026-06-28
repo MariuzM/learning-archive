@@ -1,6 +1,8 @@
 #pragma once
 
 #include <SDL3/SDL.h>
+
+#include <algorithm>
 #include <cmath>
 
 struct Color {
@@ -36,6 +38,44 @@ inline void simulate(Entity& e, float dt, float win_w, float win_h) {
     if (e.y > max_y) {
         e.y = max_y;
         e.vy = -std::fabs(e.vy);
+    }
+}
+
+inline void move_hero(Entity& e, float dt, float win_w, float win_h) {
+    e.x += e.vx * dt;
+    e.y += e.vy * dt;
+
+    e.x = std::clamp(e.x, 0.0f, win_w - e.size);
+    e.y = std::clamp(e.y, 0.0f, win_h - e.size);
+}
+
+inline void resolve_collision(Entity& a, Entity& b) {
+    const float ox = std::fmin(a.x + a.size, b.x + b.size) - std::fmax(a.x, b.x);
+    const float oy = std::fmin(a.y + a.size, b.y + b.size) - std::fmax(a.y, b.y);
+    if (ox <= 0 || oy <= 0) return;
+
+    if (ox < oy) {
+        const float push = ox / 2;
+        if (a.x < b.x) {
+            a.x -= push;
+            b.x += push;
+        } else {
+            a.x += push;
+            b.x -= push;
+        }
+        a.vx = -a.vx;
+        b.vx = -b.vx;
+    } else {
+        const float push = oy / 2;
+        if (a.y < b.y) {
+            a.y -= push;
+            b.y += push;
+        } else {
+            a.y += push;
+            b.y -= push;
+        }
+        a.vy = -a.vy;
+        b.vy = -b.vy;
     }
 }
 

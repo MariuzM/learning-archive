@@ -1,7 +1,7 @@
 Input :: struct {
     quit:          bool;
     debug:         bool;
-    show_fps       := true;
+    show_fps: 	   bool = true;
     vsync:         bool;
     fps_cap:       int;
     win_w:         float;
@@ -9,6 +9,10 @@ Input :: struct {
     mouse_x:       float;
     mouse_y:       float;
     mouse_clicked: bool;
+    up:            bool;
+    down:          bool;
+    left:          bool;
+    right:         bool;
 }
 
 process_events :: (using input: *Input) {
@@ -32,6 +36,17 @@ process_events :: (using input: *Input) {
                     case SDL_SCANCODE_3;      fps_cap = 45;
                     case SDL_SCANCODE_4;      fps_cap = 60;
                     case SDL_SCANCODE_5;      fps_cap = 0;
+                    case SDL_SCANCODE_UP;     up = true;
+                    case SDL_SCANCODE_DOWN;   down = true;
+                    case SDL_SCANCODE_LEFT;   left = true;
+                    case SDL_SCANCODE_RIGHT;  right = true;
+                }
+            case SDL_EVENT_KEY_UP;
+                if event.key.scancode == {
+                    case SDL_SCANCODE_UP;     up = false;
+                    case SDL_SCANCODE_DOWN;   down = false;
+                    case SDL_SCANCODE_LEFT;   left = false;
+                    case SDL_SCANCODE_RIGHT;  right = false;
                 }
         }
     }

@@ -4,12 +4,13 @@
 #include <SDL3_ttf/SDL_ttf.h>
 
 #include <functional>
+#include <string_view>
 
 #include "../../input/input.hpp"
 #include "text.hpp"
 
 struct Button {
-    const char* label;
+    std::string_view label;
     SDL_FRect rect;
     bool active;
     std::function<void()> on_click;

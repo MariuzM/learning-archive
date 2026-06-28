@@ -3,12 +3,15 @@
 #include <SDL3/SDL.h>
 #include <SDL3_ttf/SDL_ttf.h>
 
+#include <array>
+#include <string_view>
+
 #include "../input/input.hpp"
 #include "components/button.hpp"
 
-inline constexpr int FPS_CAPS[] = {15, 30, 45, 60, 0};
-inline constexpr const char* FPS_LABELS[] = {"15", "30", "45", "60", "OFF"};
-inline constexpr int FPS_COUNT = 5;
+inline constexpr std::array FPS_CAPS = {15, 30, 45, 60, 0};
+inline constexpr std::array<std::string_view, 5> FPS_LABELS = {"15", "30", "45", "60", "OFF"};
+inline constexpr int FPS_COUNT = static_cast<int>(FPS_CAPS.size());
 
 inline constexpr float BTN_X = 8;
 inline constexpr float BTN_Y = 34;

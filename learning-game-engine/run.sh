@@ -8,7 +8,6 @@ usage() {
 Usage: ./run.sh <lang>
 
   jai   build & run the Jai engine
-  zig   build & run the Zig engine
   cpp   build & run the C++ engine
 EOF
   exit 1
@@ -20,11 +19,11 @@ case "$1" in
   jai)
     cd "$ROOT/jai" && jai build.jai && ./build/main
     ;;
-  zig)
-    cd "$ROOT/zig" && zig build run
-    ;;
   cpp)
-    cd "$ROOT/cpp" && make run
+    cd "$ROOT/cpp"
+    cmake -B build
+    cmake --build build
+    ./build/game
     ;;
   *)
     echo "Unknown lang: $1" >&2

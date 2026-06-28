@@ -3,6 +3,10 @@
 #include <SDL3/SDL.h>
 #include <SDL3_ttf/SDL_ttf.h>
 
+#include <array>
+#include <format>
+#include <print>
+
 #include "text.hpp"
 
 inline constexpr int GRAPH_SAMPLES = 240;
@@ -15,7 +19,7 @@ inline constexpr float MS_60 = 16.67f;
 inline constexpr float MS_30 = 33.33f;
 
 struct FrameGraph {
-    float samples[GRAPH_SAMPLES] = {};
+    std::array<float, GRAPH_SAMPLES> samples = {};
     int head = 0;
     int count = 0;
 };
@@ -74,7 +78,6 @@ inline void draw_frame_graph(FrameGraph& g, SDL_Renderer* renderer, TTF_Font* fo
     const float avg = sum / static_cast<float>(g.count);
     const float cur = g.samples[(g.head - 1 + GRAPH_SAMPLES) % GRAPH_SAMPLES];
 
-    char buf[96];
-    SDL_snprintf(buf, sizeof(buf), "cur %.1f ms   min %.1f   avg %.1f   max %.1f", cur, min_ms, avg, max_ms);
-    draw_text(renderer, font, buf, GRAPH_X, GRAPH_Y + GRAPH_H + 4, SDL_Color{210, 210, 210, 255}, scale);
+    const std::string text = std::format("cur {:.1f} ms   min {:.1f}   avg {:.1f}   max {:.1f}", cur, min_ms, avg, max_ms);
+    draw_text(renderer, font, text, GRAPH_X, GRAPH_Y + GRAPH_H + 4, SDL_Color{210, 210, 210, 255}, scale);
 }

@@ -3,6 +3,8 @@
 #include <SDL3/SDL.h>
 #include <SDL3_ttf/SDL_ttf.h>
 
+#include <format>
+
 struct FpsCounter {
     float value = 0;
     float accum = 0;
@@ -34,10 +36,9 @@ struct FpsCounter {
             last_shown = shown;
             if (texture) SDL_DestroyTexture(texture);
 
-            char buf[32];
-            SDL_snprintf(buf, sizeof(buf), "FPS: %d", shown);
+            const std::string text = std::format("FPS: {}", shown);
             SDL_Color white{230, 230, 230, 255};
-            SDL_Surface* surf = TTF_RenderText_Blended(font, buf, 0, white);
+            SDL_Surface* surf = TTF_RenderText_Blended(font, text.data(), text.size(), white);
             texture = SDL_CreateTextureFromSurface(renderer, surf);
             tw = static_cast<float>(surf->w);
             th = static_cast<float>(surf->h);

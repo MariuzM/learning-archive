@@ -1,4 +1,5 @@
 #include <SDL3/SDL.h>
+#include <print>
 
 #include "game/entity.hpp"
 #include "input/input.hpp"
@@ -10,6 +11,7 @@
 static constexpr float WIDTH = 960;
 static constexpr float HEIGHT = 540;
 static constexpr float BOX_SIZE = 80;
+static constexpr float HERO_SPEED = 320;
 
 int main() {
     App app;
@@ -20,6 +22,7 @@ int main() {
 
     Entity player{100, 100, 220, 170, BOX_SIZE, {77, 166, 242, 255}};
     Entity player2{500, 300, -180, 200, BOX_SIZE, {242, 140, 64, 255}};
+    Entity hero{440, 230, 0, 0, BOX_SIZE, {90, 200, 120, 255}};
     FpsCounter fps;
     if (!fps.init("../assets/Karla-Regular.ttf", app.scale)) {
         SDL_Log("Font load failed: %s", SDL_GetError());
@@ -43,19 +46,34 @@ int main() {
         frame_graph_push(graph, dt);
         process_events(input);
 
+        hero.vx = 0;
+        hero.vy = 0;
+        if (input.left) hero.vx -= HERO_SPEED;
+        if (input.right) hero.vx += HERO_SPEED;
+        if (input.up) hero.vy -= HERO_SPEED;
+        if (input.down) hero.vy += HERO_SPEED;
+
         simulate(player, dt, input.win_w, input.win_h);
         simulate(player2, dt, input.win_w, input.win_h);
+        move_hero(hero, dt, input.win_w, input.win_h);
+
+        resolve_collision(player, player2);
+        resolve_collision(player, hero);
+        resolve_collision(player2, hero);
 
         SDL_SetRenderDrawColor(app.renderer, 26, 26, 31, 255);
         SDL_RenderClear(app.renderer);
         draw_entity(app.renderer, player);
         draw_entity(app.renderer, player2);
-        if (input.show_fps) fps.draw(app.renderer, dt);
+        draw_entity(app.renderer, hero);
+
+        if (input.show_fps) {
+            fps.draw(app.renderer, dt);
+        }
         if (input.debug) {
             draw_debug(input, app.renderer, fps.font, app.scale);
             draw_frame_graph(graph, app.renderer, fps.font, app.scale);
         }
-
         if (input.vsync != applied_vsync) {
             SDL_SetRenderVSync(app.renderer, input.vsync ? 1 : 0);
             applied_vsync = input.vsync;

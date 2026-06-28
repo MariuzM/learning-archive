@@ -13,6 +13,10 @@ struct Input {
     float mouse_x = 0;
     float mouse_y = 0;
     bool mouse_clicked = false;
+    bool up = false;
+    bool down = false;
+    bool left = false;
+    bool right = false;
 };
 
 inline void process_events(Input& in) {
@@ -38,6 +42,18 @@ inline void process_events(Input& in) {
                 case SDL_SCANCODE_3: in.fps_cap = 45; break;
                 case SDL_SCANCODE_4: in.fps_cap = 60; break;
                 case SDL_SCANCODE_5: in.fps_cap = 0; break;
+                case SDL_SCANCODE_UP: in.up = true; break;
+                case SDL_SCANCODE_DOWN: in.down = true; break;
+                case SDL_SCANCODE_LEFT: in.left = true; break;
+                case SDL_SCANCODE_RIGHT: in.right = true; break;
+                default: break;
+            }
+        } else if (event.type == SDL_EVENT_KEY_UP) {
+            switch (event.key.scancode) {
+                case SDL_SCANCODE_UP: in.up = false; break;
+                case SDL_SCANCODE_DOWN: in.down = false; break;
+                case SDL_SCANCODE_LEFT: in.left = false; break;
+                case SDL_SCANCODE_RIGHT: in.right = false; break;
                 default: break;
             }
         }

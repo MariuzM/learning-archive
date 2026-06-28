@@ -7,6 +7,7 @@ SDL_WINDOW_HIGH_PIXEL_DENSITY :: 0x0000_2000;
 
 SDL_EVENT_QUIT              :: 0x100;
 SDL_EVENT_KEY_DOWN          :: 0x300;
+SDL_EVENT_KEY_UP            :: 0x301;
 SDL_EVENT_WINDOW_RESIZED    :: 0x206;
 SDL_EVENT_MOUSE_BUTTON_DOWN :: 0x401;
 SDL_SCANCODE_ESCAPE      	:: 41;
@@ -16,6 +17,10 @@ SDL_SCANCODE_2           	:: 31;
 SDL_SCANCODE_3           	:: 32;
 SDL_SCANCODE_4           	:: 33;
 SDL_SCANCODE_5           	:: 34;
+SDL_SCANCODE_RIGHT       	:: 79;
+SDL_SCANCODE_LEFT        	:: 80;
+SDL_SCANCODE_DOWN        	:: 81;
+SDL_SCANCODE_UP          	:: 82;
 
 SDL_Window   :: struct {}
 SDL_Renderer :: struct {}

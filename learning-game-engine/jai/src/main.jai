@@ -11,9 +11,10 @@
 #load "game/entity.jai";
 #load "ui/fps.jai";
 
-WIDTH    :: 960.0;
-HEIGHT   :: 540.0;
-BOX_SIZE :: 80.0;
+WIDTH      :: 960.0;
+HEIGHT     :: 540.0;
+BOX_SIZE   :: 80.0;
+HERO_SPEED :: 320.0;
 
 main :: () {
     app: App;
@@ -22,6 +23,7 @@ main :: () {
 
     player  := Entity.{100, 100,  220, 170, BOX_SIZE, .{ 77, 166, 242, 255}};
     player2 := Entity.{500, 300, -180, 200, BOX_SIZE, .{242, 140,  64, 255}};
+    hero    := Entity.{440, 230,    0,   0, BOX_SIZE, .{ 90, 200, 120, 255}};
 
     fps: Fps_Counter;
     if !init_fps(*fps, "../assets/Karla-Regular.ttf", app.scale) {
@@ -45,13 +47,26 @@ main :: () {
         frame_graph_push(*graph, dt);
         process_events(*input);
 
+        hero.vx = 0;
+        hero.vy = 0;
+        if input.left   hero.vx -= HERO_SPEED;
+        if input.right  hero.vx += HERO_SPEED;
+        if input.up     hero.vy -= HERO_SPEED;
+        if input.down   hero.vy += HERO_SPEED;
+
         simulate(*player,  dt, input.win_w, input.win_h);
         simulate(*player2, dt, input.win_w, input.win_h);
+        move_hero(*hero,   dt, input.win_w, input.win_h);
+
+        resolve_collision(*player,  *player2);
+        resolve_collision(*player,  *hero);
+        resolve_collision(*player2, *hero);
 
         SDL_SetRenderDrawColor(app.renderer, 26, 26, 31, 255);
         SDL_RenderClear(app.renderer);
         draw_entity(app.renderer, player);
         draw_entity(app.renderer, player2);
+        draw_entity(app.renderer, hero);
         
 		if input.show_fps {
 			draw_fps(*fps, app.renderer, dt);
