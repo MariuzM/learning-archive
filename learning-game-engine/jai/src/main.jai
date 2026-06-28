@@ -26,6 +26,7 @@ main :: () {
 
     win_w := WIDTH;
     win_h := HEIGHT;
+    show_fps := true;
 
     last := SDL_GetTicks();
     quit := false;
@@ -38,7 +39,9 @@ main :: () {
         while SDL_PollEvent(*event) {
             if event.type == {
                 case SDL_EVENT_QUIT;           quit = true;
-                case SDL_EVENT_KEY_DOWN;       if event.key.scancode == SDL_SCANCODE_ESCAPE then quit = true;
+                case SDL_EVENT_KEY_DOWN;
+                    if event.key.scancode == SDL_SCANCODE_ESCAPE then quit = true;
+                    if event.key.scancode == SDL_SCANCODE_GRAVE  then show_fps = !show_fps;
                 case SDL_EVENT_WINDOW_RESIZED; win_w = cast(float) event.window.data1; win_h = cast(float) event.window.data2;
             }
         }
@@ -50,7 +53,7 @@ main :: () {
         SDL_RenderClear(app.renderer);
         draw_entity(app.renderer, player);
         draw_entity(app.renderer, player2);
-        draw_fps(*fps, app.renderer, dt);
+        if show_fps draw_fps(*fps, app.renderer, dt);
         SDL_RenderPresent(app.renderer);
 
         SDL_Delay(10);

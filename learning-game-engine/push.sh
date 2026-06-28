@@ -6,7 +6,7 @@ if [ $# -eq 0 ]; then
   exit 1
 fi
 
-msg="learning-servers: $*"
+msg="learning-game-engine: $*"
 
 git add -A
 git commit -m "$msg"

@@ -9,6 +9,7 @@ SDL_EVENT_QUIT           :: 0x100;
 SDL_EVENT_KEY_DOWN       :: 0x300;
 SDL_EVENT_WINDOW_RESIZED :: 0x206;
 SDL_SCANCODE_ESCAPE      :: 41;
+SDL_SCANCODE_GRAVE       :: 53;
 
 SDL_Window   :: struct {}
 SDL_Renderer :: struct {}

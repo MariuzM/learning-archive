@@ -25,6 +25,7 @@ int main() {
     }
     float win_w = WIDTH;
     float win_h = HEIGHT;
+    bool show_fps = true;
 
     Uint64 last = SDL_GetTicks();
     bool quit = false;
@@ -39,6 +40,7 @@ int main() {
                 quit = true;
             } else if (event.type == SDL_EVENT_KEY_DOWN) {
                 if (event.key.scancode == SDL_SCANCODE_ESCAPE) quit = true;
+                if (event.key.scancode == SDL_SCANCODE_GRAVE) show_fps = !show_fps;
             } else if (event.type == SDL_EVENT_WINDOW_RESIZED) {
                 win_w = static_cast<float>(event.window.data1);
                 win_h = static_cast<float>(event.window.data2);
@@ -52,7 +54,7 @@ int main() {
         SDL_RenderClear(app.renderer);
         draw_entity(app.renderer, player);
         draw_entity(app.renderer, player2);
-        fps.draw(app.renderer, dt);
+        if (show_fps) fps.draw(app.renderer, dt);
         SDL_RenderPresent(app.renderer);
 
         SDL_Delay(10);

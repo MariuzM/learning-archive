@@ -28,6 +28,7 @@ pub fn main() !void {
     };
     var win_w: f32 = WIDTH;
     var win_h: f32 = HEIGHT;
+    var show_fps = true;
 
     var fps = FpsCounter{};
     if (!fps.init("../assets/Karla-Regular.ttf", app.scale)) {
@@ -48,6 +49,7 @@ pub fn main() !void {
                 c.SDL_EVENT_QUIT => quit = true,
                 c.SDL_EVENT_KEY_DOWN => {
                     if (event.key.scancode == c.SDL_SCANCODE_ESCAPE) quit = true;
+                    if (event.key.scancode == c.SDL_SCANCODE_GRAVE) show_fps = !show_fps;
                 },
                 c.SDL_EVENT_WINDOW_RESIZED => {
                     win_w = @floatFromInt(event.window.data1);
@@ -64,7 +66,7 @@ pub fn main() !void {
         _ = c.SDL_RenderClear(app.renderer);
         entity.drawEntity(app.renderer, player);
         entity.drawEntity(app.renderer, player2);
-        fps.draw(app.renderer, dt);
+        if (show_fps) fps.draw(app.renderer, dt);
         _ = c.SDL_RenderPresent(app.renderer);
 
         c.SDL_Delay(10);
