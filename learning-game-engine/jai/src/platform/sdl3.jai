@@ -1,15 +1,21 @@
-SDL3 :: #library "../lib/libSDL3";
-TTF  :: #library "../lib/libSDL3_ttf";
+SDL3 :: #library "../../lib/libSDL3";
+TTF  :: #library "../../lib/libSDL3_ttf";
 
-SDL_INIT_VIDEO              :: 0x0000_0020;
-SDL_WINDOW_RESIZABLE        :: 0x0000_0020;
+SDL_INIT_VIDEO                :: 0x0000_0020;
+SDL_WINDOW_RESIZABLE          :: 0x0000_0020;
 SDL_WINDOW_HIGH_PIXEL_DENSITY :: 0x0000_2000;
 
-SDL_EVENT_QUIT           :: 0x100;
-SDL_EVENT_KEY_DOWN       :: 0x300;
-SDL_EVENT_WINDOW_RESIZED :: 0x206;
-SDL_SCANCODE_ESCAPE      :: 41;
-SDL_SCANCODE_GRAVE       :: 53;
+SDL_EVENT_QUIT              :: 0x100;
+SDL_EVENT_KEY_DOWN          :: 0x300;
+SDL_EVENT_WINDOW_RESIZED    :: 0x206;
+SDL_EVENT_MOUSE_BUTTON_DOWN :: 0x401;
+SDL_SCANCODE_ESCAPE      	:: 41;
+SDL_SCANCODE_GRAVE       	:: 53;
+SDL_SCANCODE_1           	:: 30;
+SDL_SCANCODE_2           	:: 31;
+SDL_SCANCODE_3           	:: 32;
+SDL_SCANCODE_4           	:: 33;
+SDL_SCANCODE_5           	:: 34;
 
 SDL_Window   :: struct {}
 SDL_Renderer :: struct {}
@@ -48,10 +54,25 @@ SDL_WindowEvent :: struct {
     data2:     s32;
 }
 
+SDL_MouseButtonEvent :: struct {
+    type:      u32;
+    reserved:  u32;
+    timestamp: u64;
+    windowID:  u32;
+    which:     u32;
+    button:    u8;
+    down:      bool;
+    clicks:    u8;
+    padding:   u8;
+    x:         float;
+    y:         float;
+}
+
 SDL_Event :: union {
     type:    u32;
     key:     SDL_KeyboardEvent;
     window:  SDL_WindowEvent;
+    button:  SDL_MouseButtonEvent;
     padding: [128] u8;
 }
 

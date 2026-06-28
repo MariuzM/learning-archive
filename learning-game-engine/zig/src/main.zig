@@ -1,10 +1,14 @@
 const std = @import("std");
 
-const c = @import("sdl.zig").c;
-const App = @import("platform.zig").App;
-const entity = @import("entity.zig");
+const c = @import("platform/sdl.zig").c;
+const App = @import("platform/platform.zig").App;
+const Input = @import("input/input.zig").Input;
+const ui = @import("ui/ui.zig");
+const graph_mod = @import("ui/components/graph.zig");
+const FrameGraph = graph_mod.FrameGraph;
+const entity = @import("game/entity.zig");
 const Entity = entity.Entity;
-const FpsCounter = @import("utils/fps.zig").FpsCounter;
+const FpsCounter = @import("ui/fps.zig").FpsCounter;
 
 const WIDTH: f32 = 960;
 const HEIGHT: f32 = 540;
@@ -26,9 +30,6 @@ pub fn main() !void {
         .size = BOX_SIZE,
         .color = .{ .r = 242, .g = 140, .b = 64, .a = 255 },
     };
-    var win_w: f32 = WIDTH;
-    var win_h: f32 = HEIGHT;
-    var show_fps = true;
 
     var fps = FpsCounter{};
     if (!fps.init("../assets/Karla-Regular.ttf", app.scale)) {
@@ -36,39 +37,37 @@ pub fn main() !void {
         return error.FontLoad;
     }
 
+    var input = Input{ .win_w = WIDTH, .win_h = HEIGHT };
+
+    var graph = FrameGraph{};
+
     var last: u64 = c.SDL_GetTicks();
-    var quit = false;
-    while (!quit) {
+    while (!input.quit) {
         const now = c.SDL_GetTicks();
         const dt: f32 = @as(f32, @floatFromInt(now - last)) / 1000.0;
         last = now;
 
-        var event: c.SDL_Event = undefined;
-        while (c.SDL_PollEvent(&event)) {
-            switch (event.type) {
-                c.SDL_EVENT_QUIT => quit = true,
-                c.SDL_EVENT_KEY_DOWN => {
-                    if (event.key.scancode == c.SDL_SCANCODE_ESCAPE) quit = true;
-                    if (event.key.scancode == c.SDL_SCANCODE_GRAVE) show_fps = !show_fps;
-                },
-                c.SDL_EVENT_WINDOW_RESIZED => {
-                    win_w = @floatFromInt(event.window.data1);
-                    win_h = @floatFromInt(event.window.data2);
-                },
-                else => {},
-            }
-        }
+        graph.push(dt);
+        input.processEvents();
 
-        entity.simulate(&player, dt, win_w, win_h);
-        entity.simulate(&player2, dt, win_w, win_h);
+        entity.simulate(&player, dt, input.win_w, input.win_h);
+        entity.simulate(&player2, dt, input.win_w, input.win_h);
 
         _ = c.SDL_SetRenderDrawColor(app.renderer, 26, 26, 31, 255);
         _ = c.SDL_RenderClear(app.renderer);
         entity.drawEntity(app.renderer, player);
         entity.drawEntity(app.renderer, player2);
-        if (show_fps) fps.draw(app.renderer, dt);
+        if (input.show_fps) fps.draw(app.renderer, dt);
+        if (input.debug) {
+            ui.drawDebug(&input, app.renderer, fps.font, app.scale);
+            graph_mod.drawFrameGraph(&graph, app.renderer, fps.font, app.scale);
+        }
         _ = c.SDL_RenderPresent(app.renderer);
 
-        c.SDL_Delay(10);
+        if (input.fps_cap > 0) {
+            const target_ms: u64 = 1000 / input.fps_cap;
+            const elapsed: u64 = c.SDL_GetTicks() - now;
+            if (elapsed < target_ms) c.SDL_Delay(@intCast(target_ms - elapsed));
+        }
     }
 }

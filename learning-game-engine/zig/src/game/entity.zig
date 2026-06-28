@@ -1,4 +1,4 @@
-const c = @import("sdl.zig").c;
+const c = @import("../platform/sdl.zig").c;
 
 pub const Color = struct { r: u8, g: u8, b: u8, a: u8 };
 

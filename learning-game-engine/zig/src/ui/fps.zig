@@ -1,5 +1,5 @@
 const std = @import("std");
-const c = @import("../sdl.zig").c;
+const c = @import("../platform/sdl.zig").c;
 
 pub const FpsCounter = struct {
     value: f32 = 0,

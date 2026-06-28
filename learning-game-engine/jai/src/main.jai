@@ -1,10 +1,15 @@
 #import "Basic";
 #import "Math";
 
-#load "sdl3.jai";
-#load "platform.jai";
-#load "entity.jai";
-#load "utils/fps.jai";
+#load "platform/sdl3.jai";
+#load "platform/platform.jai";
+#load "input/input.jai";
+#load "ui/components/text.jai";
+#load "ui/components/button.jai";
+#load "ui/components/graph.jai";
+#load "ui/ui.jai";
+#load "game/entity.jai";
+#load "ui/fps.jai";
 
 WIDTH    :: 960.0;
 HEIGHT   :: 540.0;
@@ -24,39 +29,42 @@ main :: () {
         return;
     }
 
-    win_w := WIDTH;
-    win_h := HEIGHT;
-    show_fps := true;
+    input: Input;
+    input.win_w = WIDTH;
+    input.win_h = HEIGHT;
+
+    graph: Frame_Graph;
 
     last := SDL_GetTicks();
-    quit := false;
-    while !quit {
+    while !input.quit {
         now := SDL_GetTicks();
         dt  := cast(float)(now - last) / 1000.0;
         last = now;
 
-        event: SDL_Event;
-        while SDL_PollEvent(*event) {
-            if event.type == {
-                case SDL_EVENT_QUIT;           quit = true;
-                case SDL_EVENT_KEY_DOWN;
-                    if event.key.scancode == SDL_SCANCODE_ESCAPE then quit = true;
-                    if event.key.scancode == SDL_SCANCODE_GRAVE  then show_fps = !show_fps;
-                case SDL_EVENT_WINDOW_RESIZED; win_w = cast(float) event.window.data1; win_h = cast(float) event.window.data2;
-            }
-        }
+        frame_graph_push(*graph, dt);
+        process_events(*input);
 
-        simulate(*player,  dt, win_w, win_h);
-        simulate(*player2, dt, win_w, win_h);
+        simulate(*player,  dt, input.win_w, input.win_h);
+        simulate(*player2, dt, input.win_w, input.win_h);
 
         SDL_SetRenderDrawColor(app.renderer, 26, 26, 31, 255);
         SDL_RenderClear(app.renderer);
         draw_entity(app.renderer, player);
         draw_entity(app.renderer, player2);
-        if show_fps draw_fps(*fps, app.renderer, dt);
+        if input.show_fps {
+			draw_fps(*fps, app.renderer, dt);
+		}
+        if input.debug {
+            draw_debug(*input, app.renderer, fps.font, app.scale);
+            draw_frame_graph(*graph, app.renderer, fps.font, app.scale);
+        }
         SDL_RenderPresent(app.renderer);
 
-        SDL_Delay(10);
+        if input.fps_cap > 0 {
+            target_ms := cast(u32)(1000 / input.fps_cap);
+            elapsed   := cast(u32)(SDL_GetTicks() - now);
+            if elapsed < target_ms  SDL_Delay(target_ms - elapsed);
+        }
         reset_temporary_storage();
     }
 }

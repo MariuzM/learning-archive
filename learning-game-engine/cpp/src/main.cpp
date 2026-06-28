@@ -1,8 +1,11 @@
 #include <SDL3/SDL.h>
 
-#include "entity.hpp"
-#include "platform.hpp"
-#include "utils/fps.hpp"
+#include "game/entity.hpp"
+#include "input/input.hpp"
+#include "platform/platform.hpp"
+#include "ui/components/graph.hpp"
+#include "ui/fps.hpp"
+#include "ui/ui.hpp"
 
 static constexpr float WIDTH = 960;
 static constexpr float HEIGHT = 540;
@@ -23,41 +26,41 @@ int main() {
         app.deinit();
         return 1;
     }
-    float win_w = WIDTH;
-    float win_h = HEIGHT;
-    bool show_fps = true;
+
+    Input input;
+    input.win_w = WIDTH;
+    input.win_h = HEIGHT;
+
+    FrameGraph graph;
 
     Uint64 last = SDL_GetTicks();
-    bool quit = false;
-    while (!quit) {
+    while (!input.quit) {
         const Uint64 now = SDL_GetTicks();
         const float dt = static_cast<float>(now - last) / 1000.0f;
         last = now;
 
-        SDL_Event event;
-        while (SDL_PollEvent(&event)) {
-            if (event.type == SDL_EVENT_QUIT) {
-                quit = true;
-            } else if (event.type == SDL_EVENT_KEY_DOWN) {
-                if (event.key.scancode == SDL_SCANCODE_ESCAPE) quit = true;
-                if (event.key.scancode == SDL_SCANCODE_GRAVE) show_fps = !show_fps;
-            } else if (event.type == SDL_EVENT_WINDOW_RESIZED) {
-                win_w = static_cast<float>(event.window.data1);
-                win_h = static_cast<float>(event.window.data2);
-            }
-        }
+        frame_graph_push(graph, dt);
+        process_events(input);
 
-        simulate(player, dt, win_w, win_h);
-        simulate(player2, dt, win_w, win_h);
+        simulate(player, dt, input.win_w, input.win_h);
+        simulate(player2, dt, input.win_w, input.win_h);
 
         SDL_SetRenderDrawColor(app.renderer, 26, 26, 31, 255);
         SDL_RenderClear(app.renderer);
         draw_entity(app.renderer, player);
         draw_entity(app.renderer, player2);
-        if (show_fps) fps.draw(app.renderer, dt);
+        if (input.show_fps) fps.draw(app.renderer, dt);
+        if (input.debug) {
+            draw_debug(input, app.renderer, fps.font, app.scale);
+            draw_frame_graph(graph, app.renderer, fps.font, app.scale);
+        }
         SDL_RenderPresent(app.renderer);
 
-        SDL_Delay(10);
+        if (input.fps_cap > 0) {
+            const Uint32 target_ms = 1000 / input.fps_cap;
+            const Uint32 elapsed = static_cast<Uint32>(SDL_GetTicks() - now);
+            if (elapsed < target_ms) SDL_Delay(target_ms - elapsed);
+        }
     }
 
     app.deinit();
