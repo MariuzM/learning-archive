@@ -1,42 +1,18 @@
 const std = @import("std");
 
 const c = @import("sdl.zig").c;
+const App = @import("platform.zig").App;
+const entity = @import("entity.zig");
+const Entity = entity.Entity;
 const FpsCounter = @import("utils/fps.zig").FpsCounter;
 
 const WIDTH: f32 = 960;
 const HEIGHT: f32 = 540;
 const BOX_SIZE: f32 = 80;
 
-const Color = struct { r: u8, g: u8, b: u8, a: u8 };
-
-const Entity = struct {
-    pos: c.SDL_FPoint,
-    vel: c.SDL_FPoint,
-    size: f32,
-    color: Color,
-};
-
 pub fn main() !void {
-    if (!c.SDL_Init(c.SDL_INIT_VIDEO)) {
-        std.debug.print("SDL_Init failed: {s}\n", .{c.SDL_GetError()});
-        return error.SDLInit;
-    }
-    defer c.SDL_Quit();
-
-    const window = c.SDL_CreateWindow("Learning Engine - Zig (milestone 1)", WIDTH, HEIGHT, c.SDL_WINDOW_RESIZABLE | c.SDL_WINDOW_HIGH_PIXEL_DENSITY) orelse {
-        std.debug.print("SDL_CreateWindow failed: {s}\n", .{c.SDL_GetError()});
-        return error.SDLWindow;
-    };
-    defer c.SDL_DestroyWindow(window);
-
-    const renderer = c.SDL_CreateRenderer(window, null) orelse {
-        std.debug.print("SDL_CreateRenderer failed: {s}\n", .{c.SDL_GetError()});
-        return error.SDLRenderer;
-    };
-    defer c.SDL_DestroyRenderer(renderer);
-
-    const scale = c.SDL_GetWindowPixelDensity(window);
-    _ = c.SDL_SetRenderScale(renderer, scale, scale);
+    var app = try App.init("Learning Engine - Zig (milestone 1)", WIDTH, HEIGHT);
+    defer app.deinit();
 
     var player = Entity{
         .pos = .{ .x = 100, .y = 100 },
@@ -54,7 +30,7 @@ pub fn main() !void {
     var win_h: f32 = HEIGHT;
 
     var fps = FpsCounter{};
-    if (!fps.init("../assets/Karla-Regular.ttf", scale)) {
+    if (!fps.init("../assets/Karla-Regular.ttf", app.scale)) {
         std.debug.print("Font load failed: {s}\n", .{c.SDL_GetError()});
         return error.FontLoad;
     }
@@ -81,46 +57,16 @@ pub fn main() !void {
             }
         }
 
-        simulate(&player, dt, win_w, win_h);
-        simulate(&player2, dt, win_w, win_h);
+        entity.simulate(&player, dt, win_w, win_h);
+        entity.simulate(&player2, dt, win_w, win_h);
 
-        _ = c.SDL_SetRenderDrawColor(renderer, 26, 26, 31, 255);
-        _ = c.SDL_RenderClear(renderer);
-        drawEntity(renderer, player);
-        drawEntity(renderer, player2);
-        fps.draw(renderer, dt);
-        _ = c.SDL_RenderPresent(renderer);
+        _ = c.SDL_SetRenderDrawColor(app.renderer, 26, 26, 31, 255);
+        _ = c.SDL_RenderClear(app.renderer);
+        entity.drawEntity(app.renderer, player);
+        entity.drawEntity(app.renderer, player2);
+        fps.draw(app.renderer, dt);
+        _ = c.SDL_RenderPresent(app.renderer);
 
         c.SDL_Delay(10);
     }
-}
-
-fn simulate(e: *Entity, dt: f32, win_w: f32, win_h: f32) void {
-    e.pos.x += e.vel.x * dt;
-    e.pos.y += e.vel.y * dt;
-
-    if (e.pos.x < 0) {
-        e.pos.x = 0;
-        e.vel.x = @abs(e.vel.x);
-    }
-    if (e.pos.y < 0) {
-        e.pos.y = 0;
-        e.vel.y = @abs(e.vel.y);
-    }
-    const max_x = win_w - e.size;
-    const max_y = win_h - e.size;
-    if (e.pos.x > max_x) {
-        e.pos.x = max_x;
-        e.vel.x = -@abs(e.vel.x);
-    }
-    if (e.pos.y > max_y) {
-        e.pos.y = max_y;
-        e.vel.y = -@abs(e.vel.y);
-    }
-}
-
-fn drawEntity(renderer: *c.SDL_Renderer, e: Entity) void {
-    _ = c.SDL_SetRenderDrawColor(renderer, e.color.r, e.color.g, e.color.b, e.color.a);
-    const box = c.SDL_FRect{ .x = e.pos.x, .y = e.pos.y, .w = e.size, .h = e.size };
-    _ = c.SDL_RenderFillRect(renderer, &box);
 }
