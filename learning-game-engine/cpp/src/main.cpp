@@ -32,6 +32,7 @@ int main() {
     input.win_h = HEIGHT;
 
     FrameGraph graph;
+    bool applied_vsync = false;
 
     Uint64 last = SDL_GetTicks();
     while (!input.quit) {
@@ -54,6 +55,12 @@ int main() {
             draw_debug(input, app.renderer, fps.font, app.scale);
             draw_frame_graph(graph, app.renderer, fps.font, app.scale);
         }
+
+        if (input.vsync != applied_vsync) {
+            SDL_SetRenderVSync(app.renderer, input.vsync ? 1 : 0);
+            applied_vsync = input.vsync;
+        }
+
         SDL_RenderPresent(app.renderer);
 
         if (input.fps_cap > 0) {

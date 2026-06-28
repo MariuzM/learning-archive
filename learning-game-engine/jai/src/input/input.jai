@@ -2,6 +2,7 @@ Input :: struct {
     quit:          bool;
     debug:         bool;
     show_fps       := true;
+    vsync:         bool;
     fps_cap:       int;
     win_w:         float;
     win_h:         float;

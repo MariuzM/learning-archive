@@ -7,6 +7,7 @@ BTN_W    :: 44.0;
 BTN_H    :: 24.0;
 BTN_GAP  :: 6.0;
 TOGGLE_W :: 60.0;
+VSYNC_W  :: 76.0;
 CAP_Y    :: BTN_Y + BTN_H + BTN_GAP;
 
 Cap_Binding :: struct {
@@ -26,6 +27,11 @@ set_cap :: (data: *void) {
     b.input.fps_cap = b.value;
 }
 
+toggle_vsync :: (data: *void) {
+    input := cast(*Input) data;
+    input.vsync = !input.vsync;
+}
+
 draw_debug :: (input: *Input, renderer: *SDL_Renderer, font: *TTF_Font, scale: float) {
     toggle := Button.{
         label    = "FPS",
@@ -35,6 +41,15 @@ draw_debug :: (input: *Input, renderer: *SDL_Renderer, font: *TTF_Font, scale: f
         data     = cast(*void) input,
     };
     button(toggle, input, renderer, font, scale);
+
+    vsync := Button.{
+        label    = "VSYNC",
+        rect     = .{ BTN_X + TOGGLE_W + BTN_GAP, BTN_Y, VSYNC_W, BTN_H },
+        active   = input.vsync,
+        on_click = toggle_vsync,
+        data     = cast(*void) input,
+    };
+    button(vsync, input, renderer, font, scale);
 
     for i: 0..FPS_CAPS.count - 1 {
         cap_bindings[i] = .{ input, FPS_CAPS[i] };

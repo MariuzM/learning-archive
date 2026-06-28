@@ -34,6 +34,7 @@ main :: () {
     input.win_h = HEIGHT;
 
     graph: Frame_Graph;
+    applied_vsync := false;
 
     last := SDL_GetTicks();
     while !input.quit {
@@ -51,13 +52,19 @@ main :: () {
         SDL_RenderClear(app.renderer);
         draw_entity(app.renderer, player);
         draw_entity(app.renderer, player2);
-        if input.show_fps {
+        
+		if input.show_fps {
 			draw_fps(*fps, app.renderer, dt);
 		}
         if input.debug {
             draw_debug(*input, app.renderer, fps.font, app.scale);
             draw_frame_graph(*graph, app.renderer, fps.font, app.scale);
         }
+        if input.vsync != applied_vsync {
+            SDL_SetRenderVSync(app.renderer, cast(s32)(ifx input.vsync then 1 else 0));
+            applied_vsync = input.vsync;
+        }
+
         SDL_RenderPresent(app.renderer);
 
         if input.fps_cap > 0 {

@@ -85,6 +85,7 @@ SDL_CreateRenderer     :: (window: *SDL_Window, name: *u8) -> *SDL_Renderer #for
 SDL_DestroyRenderer    :: (renderer: *SDL_Renderer) #foreign SDL3;
 SDL_GetWindowPixelDensity :: (window: *SDL_Window) -> float #foreign SDL3;
 SDL_SetRenderScale     :: (renderer: *SDL_Renderer, scaleX: float, scaleY: float) -> bool #foreign SDL3;
+SDL_SetRenderVSync     :: (renderer: *SDL_Renderer, vsync: s32) -> bool #foreign SDL3;
 SDL_GetTicks           :: () -> u64 #foreign SDL3;
 SDL_Delay              :: (ms: u32) #foreign SDL3;
 SDL_PollEvent          :: (event: *SDL_Event) -> bool #foreign SDL3;

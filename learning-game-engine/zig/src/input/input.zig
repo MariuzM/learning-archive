@@ -4,6 +4,7 @@ pub const Input = struct {
     quit: bool = false,
     debug: bool = false,
     show_fps: bool = true,
+    vsync: bool = false,
     fps_cap: u32 = 0,
     win_w: f32 = 0,
     win_h: f32 = 0,

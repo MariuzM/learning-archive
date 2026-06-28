@@ -40,6 +40,7 @@ pub fn main() !void {
     var input = Input{ .win_w = WIDTH, .win_h = HEIGHT };
 
     var graph = FrameGraph{};
+    var applied_vsync = false;
 
     var last: u64 = c.SDL_GetTicks();
     while (!input.quit) {
@@ -62,6 +63,12 @@ pub fn main() !void {
             ui.drawDebug(&input, app.renderer, fps.font, app.scale);
             graph_mod.drawFrameGraph(&graph, app.renderer, fps.font, app.scale);
         }
+
+        if (input.vsync != applied_vsync) {
+            _ = c.SDL_SetRenderVSync(app.renderer, if (input.vsync) 1 else 0);
+            applied_vsync = input.vsync;
+        }
+
         _ = c.SDL_RenderPresent(app.renderer);
 
         if (input.fps_cap > 0) {
