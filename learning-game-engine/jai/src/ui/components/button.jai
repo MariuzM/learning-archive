@@ -20,6 +20,8 @@ button :: (b: Button, input: *Input, renderer: *SDL_Renderer, font: *TTF_Font, s
     }
 }
 
+#scope_file
+
 inside :: (r: SDL_FRect, x: float, y: float) -> bool {
     return x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h;
 }

@@ -65,6 +65,8 @@ draw_frame_graph :: (using g: *Frame_Graph, renderer: *SDL_Renderer, font: *TTF_
     draw_text(renderer, font, label, GRAPH_X, GRAPH_Y + GRAPH_H + 4, .{210, 210, 210, 255}, scale);
 }
 
+#scope_file
+
 draw_threshold :: (renderer: *SDL_Renderer, ms: float) {
     frac := ms / GRAPH_MAX_MS;
     if frac > 1.0  return;

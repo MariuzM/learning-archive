@@ -1,3 +1,37 @@
+draw_debug :: (input: *Input, renderer: *SDL_Renderer, font: *TTF_Font, scale: float) {
+    toggle := Button.{
+        label    = "FPS",
+        rect     = .{ BTN_X, BTN_Y, TOGGLE_W, BTN_H },
+        active   = input.show_fps,
+        on_click = toggle_fps,
+        data     = cast(*void) input,
+    };
+    button(toggle, input, renderer, font, scale);
+
+    vsync := Button.{
+        label    = "VSYNC",
+        rect     = .{ BTN_X + TOGGLE_W + BTN_GAP, BTN_Y, VSYNC_W, BTN_H },
+        active   = input.vsync,
+        on_click = toggle_vsync,
+        data     = cast(*void) input,
+    };
+    button(vsync, input, renderer, font, scale);
+
+    for i: 0..FPS_CAPS.count - 1 {
+        cap_bindings[i] = .{ input, FPS_CAPS[i] };
+        cap := Button.{
+            label    = FPS_LABELS[i],
+            rect     = .{ BTN_X + cast(float) i * (BTN_W + BTN_GAP), CAP_Y, BTN_W, BTN_H },
+            active   = FPS_CAPS[i] == input.fps_cap,
+            on_click = set_cap,
+            data     = cast(*void) *cap_bindings[i],
+        };
+        button(cap, input, renderer, font, scale);
+    }
+}
+
+#scope_file
+
 FPS_CAPS   :: int.[15, 30, 45, 60, 0];
 FPS_LABELS :: string.["15", "30", "45", "60", "OFF"];
 
@@ -30,36 +64,4 @@ set_cap :: (data: *void) {
 toggle_vsync :: (data: *void) {
     input := cast(*Input) data;
     input.vsync = !input.vsync;
-}
-
-draw_debug :: (input: *Input, renderer: *SDL_Renderer, font: *TTF_Font, scale: float) {
-    toggle := Button.{
-        label    = "FPS",
-        rect     = .{ BTN_X, BTN_Y, TOGGLE_W, BTN_H },
-        active   = input.show_fps,
-        on_click = toggle_fps,
-        data     = cast(*void) input,
-    };
-    button(toggle, input, renderer, font, scale);
-
-    vsync := Button.{
-        label    = "VSYNC",
-        rect     = .{ BTN_X + TOGGLE_W + BTN_GAP, BTN_Y, VSYNC_W, BTN_H },
-        active   = input.vsync,
-        on_click = toggle_vsync,
-        data     = cast(*void) input,
-    };
-    button(vsync, input, renderer, font, scale);
-
-    for i: 0..FPS_CAPS.count - 1 {
-        cap_bindings[i] = .{ input, FPS_CAPS[i] };
-        cap := Button.{
-            label    = FPS_LABELS[i],
-            rect     = .{ BTN_X + cast(float) i * (BTN_W + BTN_GAP), CAP_Y, BTN_W, BTN_H },
-            active   = FPS_CAPS[i] == input.fps_cap,
-            on_click = set_cap,
-            data     = cast(*void) *cap_bindings[i],
-        };
-        button(cap, input, renderer, font, scale);
-    }
 }
