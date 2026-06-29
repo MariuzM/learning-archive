@@ -1,6 +1,7 @@
 #include <SDL3/SDL.h>
 
 #include "game/entity.h"
+#include "game/sprite.h"
 #include "input/input.h"
 #include "platform/platform.h"
 #include "ui/components/graph.h"
@@ -29,6 +30,8 @@ int main() {
         app.deinit();
         return 1;
     }
+
+    SDL_Texture* hero_sprite = load_sprite(app.renderer, "../assets/hero.bmp");
 
     Input input;
     input.win_w = WIDTH;
@@ -90,7 +93,11 @@ int main() {
         draw_entity(app.renderer, player);
         draw_entity(app.renderer, player2);
         draw_entity(app.renderer, ghost);
-        draw_entity(app.renderer, hero);
+        if (hero_sprite) {
+            draw_sprite(app.renderer, hero_sprite, hero);
+        } else {
+            draw_entity(app.renderer, hero);
+        }
 
         if (input.show_fps) {
             fps.draw(app.renderer, dt);
@@ -113,6 +120,7 @@ int main() {
         }
     }
 
+    if (hero_sprite) SDL_DestroyTexture(hero_sprite);
     app.deinit();
     return 0;
 }

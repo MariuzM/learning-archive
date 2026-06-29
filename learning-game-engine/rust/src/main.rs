@@ -5,6 +5,7 @@ mod ui;
 
 use sdl3::pixels::Color as SdlColor;
 
+use game::sprite::{draw_sprite, load_sprite};
 use game::{clamp_bounds, drag_hero, draw_entity, move_hero, point_in_entity, resolve_collision, simulate, Color, Entity};
 use input::{process_events, Input};
 use platform::App;
@@ -92,6 +93,9 @@ fn main() {
         }
     };
 
+    let texture_creator = app.canvas.texture_creator();
+    let hero_sprite = load_sprite(&texture_creator, "../assets/hero.bmp");
+
     let mut input = Input::default();
     input.win_w = WIDTH as f32;
     input.win_h = HEIGHT as f32;
@@ -162,7 +166,10 @@ fn main() {
         draw_entity(&mut app.canvas, &player);
         draw_entity(&mut app.canvas, &player2);
         draw_entity(&mut app.canvas, &ghost);
-        draw_entity(&mut app.canvas, &hero);
+        match &hero_sprite {
+            Some(tex) => draw_sprite(&mut app.canvas, tex, &hero),
+            None => draw_entity(&mut app.canvas, &hero),
+        }
 
         if input.show_fps {
             fps.draw(&mut app.canvas, dt);

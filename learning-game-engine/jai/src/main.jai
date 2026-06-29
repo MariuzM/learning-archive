@@ -9,6 +9,7 @@
 #load "ui/components/graph.jai";
 #load "ui/ui.jai";
 #load "game/entity.jai";
+#load "game/sprite.jai";
 #load "ui/fps.jai";
 
 WIDTH      :: 960.0;
@@ -31,6 +32,9 @@ main :: () {
         print("Font load failed: %\n", to_string(SDL_GetError()));
         return;
     }
+
+    hero_sprite := load_sprite(app.renderer, "../assets/hero.bmp");
+    defer if hero_sprite  SDL_DestroyTexture(hero_sprite);
 
     input: Input;
     input.win_w = WIDTH;
@@ -92,7 +96,8 @@ main :: () {
         draw_entity(app.renderer, player);
         draw_entity(app.renderer, player2);
         draw_entity(app.renderer, ghost);
-        draw_entity(app.renderer, hero);
+        if hero_sprite  draw_sprite(app.renderer, hero_sprite, hero);
+        else            draw_entity(app.renderer, hero);
         
 		if input.show_fps {
 			draw_fps(*fps, app.renderer, dt);

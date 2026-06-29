@@ -1,3 +1,5 @@
+pub mod sprite;
+
 use sdl3::pixels::Color as SdlColor;
 use sdl3::render::{FRect, WindowCanvas};
 

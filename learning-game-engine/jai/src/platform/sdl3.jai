@@ -117,9 +117,12 @@ SDL_SetRenderDrawColor :: (renderer: *SDL_Renderer, r: u8, g: u8, b: u8, a: u8) 
 SDL_SetRenderDrawBlendMode :: (renderer: *SDL_Renderer, blendMode: u32) -> bool #foreign SDL3;
 SDL_RenderClear        :: (renderer: *SDL_Renderer) -> bool #foreign SDL3;
 SDL_RenderFillRect     :: (renderer: *SDL_Renderer, rect: *SDL_FRect) -> bool #foreign SDL3;
+SDL_RenderRect         :: (renderer: *SDL_Renderer, rect: *SDL_FRect) -> bool #foreign SDL3;
 SDL_RenderPresent      :: (renderer: *SDL_Renderer) -> bool #foreign SDL3;
 SDL_RenderTexture      :: (renderer: *SDL_Renderer, texture: *SDL_Texture, srcrect: *SDL_FRect, dstrect: *SDL_FRect) -> bool #foreign SDL3;
 SDL_CreateTextureFromSurface :: (renderer: *SDL_Renderer, surface: *SDL_Surface) -> *SDL_Texture #foreign SDL3;
+SDL_SetTextureBlendMode :: (texture: *SDL_Texture, blendMode: u32) -> bool #foreign SDL3;
+SDL_LoadBMP            :: (file: *u8) -> *SDL_Surface #foreign SDL3;
 SDL_DestroyTexture     :: (texture: *SDL_Texture) #foreign SDL3;
 SDL_DestroySurface     :: (surface: *SDL_Surface) #foreign SDL3;
 
