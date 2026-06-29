@@ -1,6 +1,7 @@
 Input :: struct {
     quit:          bool;
     debug:         bool;
+    paused:        bool;
     show_fps: 	   bool = true;
     vsync:         bool;
     fps_cap:       int;

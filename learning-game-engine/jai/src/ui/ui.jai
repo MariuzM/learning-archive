@@ -17,6 +17,15 @@ draw_debug :: (input: *Input, renderer: *SDL_Renderer, font: *TTF_Font, scale: f
     };
     button(vsync, input, renderer, font, scale);
 
+    pause := Button.{
+        label    = "PAUSE",
+        rect     = .{ BTN_X + TOGGLE_W + VSYNC_W + BTN_GAP * 2, BTN_Y, PAUSE_W, BTN_H },
+        active   = input.paused,
+        on_click = toggle_pause,
+        data     = cast(*void) input,
+    };
+    button(pause, input, renderer, font, scale);
+
     for i: 0..FPS_CAPS.count - 1 {
         cap_bindings[i] = .{ input, FPS_CAPS[i] };
         cap := Button.{
@@ -42,6 +51,7 @@ BTN_H    :: 24.0;
 BTN_GAP  :: 6.0;
 TOGGLE_W :: 60.0;
 VSYNC_W  :: 76.0;
+PAUSE_W  :: 76.0;
 CAP_Y    :: BTN_Y + BTN_H + BTN_GAP;
 
 Cap_Binding :: struct {
@@ -64,4 +74,9 @@ set_cap :: (data: *void) {
 toggle_vsync :: (data: *void) {
     input := cast(*Input) data;
     input.vsync = !input.vsync;
+}
+
+toggle_pause :: (data: *void) {
+    input := cast(*Input) data;
+    input.paused = !input.paused;
 }

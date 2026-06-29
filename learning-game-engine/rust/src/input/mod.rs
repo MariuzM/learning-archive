@@ -5,6 +5,7 @@ use sdl3::EventPump;
 pub struct Input {
     pub quit: bool,
     pub debug: bool,
+    pub paused: bool,
     pub show_fps: bool,
     pub vsync: bool,
     pub fps_cap: i32,
@@ -25,6 +26,7 @@ impl Default for Input {
         Input {
             quit: false,
             debug: false,
+            paused: false,
             show_fps: true,
             vsync: false,
             fps_cap: 0,

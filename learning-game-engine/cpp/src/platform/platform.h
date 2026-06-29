@@ -27,6 +27,7 @@ struct App {
 
         scale = SDL_GetWindowPixelDensity(window);
         SDL_SetRenderScale(renderer, scale, scale);
+        SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
         return true;
     }
 

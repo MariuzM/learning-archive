@@ -20,6 +20,7 @@ inline constexpr float BTN_H = 24;
 inline constexpr float BTN_GAP = 6;
 inline constexpr float TOGGLE_W = 60;
 inline constexpr float VSYNC_W = 76;
+inline constexpr float PAUSE_W = 76;
 inline constexpr float CAP_Y = BTN_Y + BTN_H + BTN_GAP;
 
 inline SDL_FRect fps_toggle_rect() {
@@ -28,6 +29,10 @@ inline SDL_FRect fps_toggle_rect() {
 
 inline SDL_FRect vsync_toggle_rect() {
     return SDL_FRect{BTN_X + TOGGLE_W + BTN_GAP, BTN_Y, VSYNC_W, BTN_H};
+}
+
+inline SDL_FRect pause_toggle_rect() {
+    return SDL_FRect{BTN_X + TOGGLE_W + VSYNC_W + BTN_GAP * 2, BTN_Y, PAUSE_W, BTN_H};
 }
 
 inline SDL_FRect cap_button_rect(int i) {
@@ -39,6 +44,9 @@ inline void draw_debug(Input& input, SDL_Renderer* renderer, TTF_Font* font, flo
            input, renderer, font, scale);
 
     button(Button{"VSYNC", vsync_toggle_rect(), input.vsync, [&] { input.vsync = !input.vsync; }},
+           input, renderer, font, scale);
+
+    button(Button{"PAUSE", pause_toggle_rect(), input.paused, [&] { input.paused = !input.paused; }},
            input, renderer, font, scale);
 
     for (int i = 0; i < FPS_COUNT; i++) {

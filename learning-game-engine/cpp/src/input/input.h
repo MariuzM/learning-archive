@@ -5,6 +5,7 @@
 struct Input {
     bool quit = false;
     bool debug = false;
+    bool paused = false;
     bool show_fps = true;
     bool vsync = false;
     int fps_cap = 0;

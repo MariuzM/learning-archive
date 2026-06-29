@@ -23,7 +23,8 @@ main :: () {
 
     player  := Entity.{100, 100,  220, 170, BOX_SIZE, .{ 77, 166, 242, 255}};
     player2 := Entity.{500, 300, -180, 200, BOX_SIZE, .{242, 140,  64, 255}};
-    hero    := Entity.{440, 230,    0,   0, BOX_SIZE, .{ 90, 200, 120, 255}};
+    ghost   := Entity.{200, 400,  150, -90, BOX_SIZE, .{200,  80, 200, 255}};
+    hero    := Entity.{440, 230,    0,   0, BOX_SIZE, .{ 90, 200, 120, 120}};
 
     fps: Fps_Counter;
     if !init_fps(*fps, "../assets/Karla-Regular.ttf", app.scale) {
@@ -67,8 +68,11 @@ main :: () {
             if input.down   hero.vy += HERO_SPEED;
         }
 
-        simulate(*player,  dt, input.win_w, input.win_h);
-        simulate(*player2, dt, input.win_w, input.win_h);
+        if !input.paused {
+            simulate(*player,  dt, input.win_w, input.win_h);
+            simulate(*player2, dt, input.win_w, input.win_h);
+            simulate(*ghost,   dt, input.win_w, input.win_h);
+        }
         if dragging {
             drag_hero(*hero, input.mouse_x, input.mouse_y, drag_off_x, drag_off_y, input.win_w, input.win_h);
         } else {
@@ -79,10 +83,15 @@ main :: () {
         resolve_collision(*player,  *hero);
         resolve_collision(*player2, *hero);
 
+        clamp_bounds(*player,  input.win_w, input.win_h);
+        clamp_bounds(*player2, input.win_w, input.win_h);
+        clamp_bounds(*hero,    input.win_w, input.win_h);
+
         SDL_SetRenderDrawColor(app.renderer, 26, 26, 31, 255);
         SDL_RenderClear(app.renderer);
         draw_entity(app.renderer, player);
         draw_entity(app.renderer, player2);
+        draw_entity(app.renderer, ghost);
         draw_entity(app.renderer, hero);
         
 		if input.show_fps {

@@ -24,6 +24,7 @@ init_app :: (app: *App, title: string, w: float, h: float) -> bool {
 
     app.scale = SDL_GetWindowPixelDensity(app.window);
     SDL_SetRenderScale(app.renderer, app.scale, app.scale);
+    SDL_SetRenderDrawBlendMode(app.renderer, SDL_BLENDMODE_BLEND);
     return true;
 }
 

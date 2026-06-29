@@ -24,6 +24,9 @@ SDL_SCANCODE_LEFT        	:: 80;
 SDL_SCANCODE_DOWN        	:: 81;
 SDL_SCANCODE_UP          	:: 82;
 
+SDL_BLENDMODE_NONE  :: 0x0000_0000;
+SDL_BLENDMODE_BLEND :: 0x0000_0001;
+
 SDL_Window   :: struct {}
 SDL_Renderer :: struct {}
 SDL_Texture  :: struct {}
@@ -111,6 +114,7 @@ SDL_GetTicks           :: () -> u64 #foreign SDL3;
 SDL_Delay              :: (ms: u32) #foreign SDL3;
 SDL_PollEvent          :: (event: *SDL_Event) -> bool #foreign SDL3;
 SDL_SetRenderDrawColor :: (renderer: *SDL_Renderer, r: u8, g: u8, b: u8, a: u8) -> bool #foreign SDL3;
+SDL_SetRenderDrawBlendMode :: (renderer: *SDL_Renderer, blendMode: u32) -> bool #foreign SDL3;
 SDL_RenderClear        :: (renderer: *SDL_Renderer) -> bool #foreign SDL3;
 SDL_RenderFillRect     :: (renderer: *SDL_Renderer, rect: *SDL_FRect) -> bool #foreign SDL3;
 SDL_RenderPresent      :: (renderer: *SDL_Renderer) -> bool #foreign SDL3;

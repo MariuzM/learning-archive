@@ -26,12 +26,8 @@ move_hero :: (e: *Entity, dt: float, win_w: float, win_h: float) {
     e.x += e.vx * dt;
     e.y += e.vy * dt;
 
-    max_x := win_w - e.size;
-    max_y := win_h - e.size;
-    if e.x < 0      e.x = 0;
-    if e.y < 0      e.y = 0;
-    if e.x > max_x  e.x = max_x;
-    if e.y > max_y  e.y = max_y;
+    e.x = clamp(e.x, 0, win_w - e.size);
+    e.y = clamp(e.y, 0, win_h - e.size);
 }
 
 point_in_entity :: (e: Entity, px: float, py: float) -> bool {
@@ -42,12 +38,13 @@ drag_hero :: (e: *Entity, px: float, py: float, off_x: float, off_y: float, win_
     e.x = px - off_x;
     e.y = py - off_y;
 
-    max_x := win_w - e.size;
-    max_y := win_h - e.size;
-    if e.x < 0      e.x = 0;
-    if e.y < 0      e.y = 0;
-    if e.x > max_x  e.x = max_x;
-    if e.y > max_y  e.y = max_y;
+    e.x = clamp(e.x, 0, win_w - e.size);
+    e.y = clamp(e.y, 0, win_h - e.size);
+}
+
+clamp_bounds :: (e: *Entity, win_w: float, win_h: float) {
+    e.x = clamp(e.x, 0, win_w - e.size);
+    e.y = clamp(e.y, 0, win_h - e.size);
 }
 
 resolve_collision :: (a: *Entity, b: *Entity) {

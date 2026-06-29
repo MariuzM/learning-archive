@@ -21,7 +21,8 @@ int main() {
 
     Entity player{100, 100, 220, 170, BOX_SIZE, {77, 166, 242, 255}};
     Entity player2{500, 300, -180, 200, BOX_SIZE, {242, 140, 64, 255}};
-    Entity hero{440, 230, 0, 0, BOX_SIZE, {90, 200, 120, 255}};
+    Entity ghost{200, 400, 150, -90, BOX_SIZE, {200, 80, 200, 255}};
+    Entity hero{440, 230, 0, 0, BOX_SIZE, {90, 200, 120, 120}};
     FpsCounter fps;
     if (!fps.init("../assets/Karla-Regular.ttf", app.scale)) {
         SDL_Log("Font load failed: %s", SDL_GetError());
@@ -65,8 +66,11 @@ int main() {
             if (input.down) hero.vy += HERO_SPEED;
         }
 
-        simulate(player, dt, input.win_w, input.win_h);
-        simulate(player2, dt, input.win_w, input.win_h);
+        if (!input.paused) {
+            simulate(player, dt, input.win_w, input.win_h);
+            simulate(player2, dt, input.win_w, input.win_h);
+            simulate(ghost, dt, input.win_w, input.win_h);
+        }
         if (dragging) {
             drag_hero(hero, input.mouse_x, input.mouse_y, drag_off_x, drag_off_y, input.win_w, input.win_h);
         } else {
@@ -77,10 +81,15 @@ int main() {
         resolve_collision(player, hero);
         resolve_collision(player2, hero);
 
+        clamp_bounds(player, input.win_w, input.win_h);
+        clamp_bounds(player2, input.win_w, input.win_h);
+        clamp_bounds(hero, input.win_w, input.win_h);
+
         SDL_SetRenderDrawColor(app.renderer, 26, 26, 31, 255);
         SDL_RenderClear(app.renderer);
         draw_entity(app.renderer, player);
         draw_entity(app.renderer, player2);
+        draw_entity(app.renderer, ghost);
         draw_entity(app.renderer, hero);
 
         if (input.show_fps) {

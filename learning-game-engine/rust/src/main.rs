@@ -5,7 +5,7 @@ mod ui;
 
 use sdl3::pixels::Color as SdlColor;
 
-use game::{drag_hero, draw_entity, move_hero, point_in_entity, resolve_collision, simulate, Color, Entity};
+use game::{clamp_bounds, drag_hero, draw_entity, move_hero, point_in_entity, resolve_collision, simulate, Color, Entity};
 use input::{process_events, Input};
 use platform::App;
 use ui::components::graph::{draw_frame_graph, frame_graph_push, FrameGraph};
@@ -57,6 +57,19 @@ fn main() {
             a: 255,
         },
     };
+    let mut ghost = Entity {
+        x: 200.0,
+        y: 400.0,
+        vx: 150.0,
+        vy: -90.0,
+        size: BOX_SIZE,
+        color: Color {
+            r: 200,
+            g: 80,
+            b: 200,
+            a: 255,
+        },
+    };
     let mut hero = Entity {
         x: 440.0,
         y: 230.0,
@@ -67,7 +80,7 @@ fn main() {
             r: 90,
             g: 200,
             b: 120,
-            a: 255,
+            a: 120,
         },
     };
 
@@ -125,8 +138,11 @@ fn main() {
             }
         }
 
-        simulate(&mut player, dt, input.win_w, input.win_h);
-        simulate(&mut player2, dt, input.win_w, input.win_h);
+        if !input.paused {
+            simulate(&mut player, dt, input.win_w, input.win_h);
+            simulate(&mut player2, dt, input.win_w, input.win_h);
+            simulate(&mut ghost, dt, input.win_w, input.win_h);
+        }
         if dragging {
             drag_hero(&mut hero, input.mouse_x, input.mouse_y, drag_off_x, drag_off_y, input.win_w, input.win_h);
         } else {
@@ -137,10 +153,15 @@ fn main() {
         resolve_collision(&mut player, &mut hero);
         resolve_collision(&mut player2, &mut hero);
 
+        clamp_bounds(&mut player, input.win_w, input.win_h);
+        clamp_bounds(&mut player2, input.win_w, input.win_h);
+        clamp_bounds(&mut hero, input.win_w, input.win_h);
+
         app.canvas.set_draw_color(SdlColor::RGBA(26, 26, 31, 255));
         app.canvas.clear();
         draw_entity(&mut app.canvas, &player);
         draw_entity(&mut app.canvas, &player2);
+        draw_entity(&mut app.canvas, &ghost);
         draw_entity(&mut app.canvas, &hero);
 
         if input.show_fps {

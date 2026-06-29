@@ -61,6 +61,11 @@ inline void drag_hero(Entity& e, float px, float py, float off_x, float off_y, f
     e.y = std::clamp(e.y, 0.0f, win_h - e.size);
 }
 
+inline void clamp_bounds(Entity& e, float win_w, float win_h) {
+    e.x = std::clamp(e.x, 0.0f, win_w - e.size);
+    e.y = std::clamp(e.y, 0.0f, win_h - e.size);
+}
+
 inline void resolve_collision(Entity& a, Entity& b) {
     const float ox = std::fmin(a.x + a.size, b.x + b.size) - std::fmax(a.x, b.x);
     const float oy = std::fmin(a.y + a.size, b.y + b.size) - std::fmax(a.y, b.y);

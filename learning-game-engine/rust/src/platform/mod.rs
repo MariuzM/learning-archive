@@ -1,4 +1,4 @@
-use sdl3::render::WindowCanvas;
+use sdl3::render::{BlendMode, WindowCanvas};
 use sdl3::Sdl;
 
 pub struct App {
@@ -21,6 +21,7 @@ impl App {
 
         let mut canvas = window.into_canvas();
         canvas.set_scale(scale, scale).map_err(|e| e.to_string())?;
+        canvas.set_blend_mode(BlendMode::Blend);
 
         Ok(App { canvas, scale })
     }

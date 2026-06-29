@@ -17,6 +17,7 @@ const BTN_H: f32 = 24.0;
 const BTN_GAP: f32 = 6.0;
 const TOGGLE_W: f32 = 60.0;
 const VSYNC_W: f32 = 76.0;
+const PAUSE_W: f32 = 76.0;
 const CAP_Y: f32 = BTN_Y + BTN_H + BTN_GAP;
 
 fn fps_toggle_rect() -> FRect {
@@ -25,6 +26,10 @@ fn fps_toggle_rect() -> FRect {
 
 fn vsync_toggle_rect() -> FRect {
     FRect::new(BTN_X + TOGGLE_W + BTN_GAP, BTN_Y, VSYNC_W, BTN_H)
+}
+
+fn pause_toggle_rect() -> FRect {
+    FRect::new(BTN_X + TOGGLE_W + VSYNC_W + BTN_GAP * 2.0, BTN_Y, PAUSE_W, BTN_H)
 }
 
 fn cap_button_rect(i: usize) -> FRect {
@@ -40,6 +45,10 @@ pub fn draw_debug(input: &mut Input, canvas: &mut WindowCanvas, font: &Font, sca
 
     if button(canvas, font, scale, "VSYNC", vsync_toggle_rect(), input.vsync, mc, mx, my) {
         input.vsync = !input.vsync;
+    }
+
+    if button(canvas, font, scale, "PAUSE", pause_toggle_rect(), input.paused, mc, mx, my) {
+        input.paused = !input.paused;
     }
 
     for i in 0..FPS_CAPS.len() {
