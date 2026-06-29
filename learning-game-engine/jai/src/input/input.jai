@@ -9,6 +9,7 @@ Input :: struct {
     mouse_x:       float;
     mouse_y:       float;
     mouse_clicked: bool;
+    mouse_down:    bool;
     up:            bool;
     down:          bool;
     left:          bool;
@@ -25,8 +26,16 @@ process_events :: (using input: *Input) {
             case SDL_EVENT_WINDOW_RESIZED; win_w = cast(float) event.window.data1; win_h = cast(float) event.window.data2;
             case SDL_EVENT_MOUSE_BUTTON_DOWN;
                 mouse_clicked = true;
+                mouse_down = true;
                 mouse_x = event.button.x;
                 mouse_y = event.button.y;
+            case SDL_EVENT_MOUSE_BUTTON_UP;
+                mouse_down = false;
+                mouse_x = event.button.x;
+                mouse_y = event.button.y;
+            case SDL_EVENT_MOUSE_MOTION;
+                mouse_x = event.motion.x;
+                mouse_y = event.motion.y;
             case SDL_EVENT_KEY_DOWN;
                 if event.key.scancode == {
                     case SDL_SCANCODE_ESCAPE; quit = true;

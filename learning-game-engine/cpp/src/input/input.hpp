@@ -13,6 +13,7 @@ struct Input {
     float mouse_x = 0;
     float mouse_y = 0;
     bool mouse_clicked = false;
+    bool mouse_down = false;
     bool up = false;
     bool down = false;
     bool left = false;
@@ -31,8 +32,16 @@ inline void process_events(Input& in) {
             in.win_h = static_cast<float>(event.window.data2);
         } else if (event.type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
             in.mouse_clicked = true;
+            in.mouse_down = true;
             in.mouse_x = event.button.x;
             in.mouse_y = event.button.y;
+        } else if (event.type == SDL_EVENT_MOUSE_BUTTON_UP) {
+            in.mouse_down = false;
+            in.mouse_x = event.button.x;
+            in.mouse_y = event.button.y;
+        } else if (event.type == SDL_EVENT_MOUSE_MOTION) {
+            in.mouse_x = event.motion.x;
+            in.mouse_y = event.motion.y;
         } else if (event.type == SDL_EVENT_KEY_DOWN) {
             switch (event.key.scancode) {
                 case SDL_SCANCODE_ESCAPE: in.quit = true; break;

@@ -13,6 +13,7 @@ pub struct Input {
     pub mouse_x: f32,
     pub mouse_y: f32,
     pub mouse_clicked: bool,
+    pub mouse_down: bool,
     pub up: bool,
     pub down: bool,
     pub left: bool,
@@ -32,6 +33,7 @@ impl Default for Input {
             mouse_x: 0.0,
             mouse_y: 0.0,
             mouse_clicked: false,
+            mouse_down: false,
             up: false,
             down: false,
             left: false,
@@ -55,6 +57,16 @@ pub fn process_events(input: &mut Input, pump: &mut EventPump) {
             }
             Event::MouseButtonDown { x, y, .. } => {
                 input.mouse_clicked = true;
+                input.mouse_down = true;
+                input.mouse_x = x;
+                input.mouse_y = y;
+            }
+            Event::MouseButtonUp { x, y, .. } => {
+                input.mouse_down = false;
+                input.mouse_x = x;
+                input.mouse_y = y;
+            }
+            Event::MouseMotion { x, y, .. } => {
                 input.mouse_x = x;
                 input.mouse_y = y;
             }

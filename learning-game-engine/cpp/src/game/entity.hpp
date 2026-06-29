@@ -49,6 +49,18 @@ inline void move_hero(Entity& e, float dt, float win_w, float win_h) {
     e.y = std::clamp(e.y, 0.0f, win_h - e.size);
 }
 
+inline bool point_in_entity(const Entity& e, float px, float py) {
+    return px >= e.x && px <= e.x + e.size && py >= e.y && py <= e.y + e.size;
+}
+
+inline void drag_hero(Entity& e, float px, float py, float off_x, float off_y, float win_w, float win_h) {
+    e.x = px - off_x;
+    e.y = py - off_y;
+
+    e.x = std::clamp(e.x, 0.0f, win_w - e.size);
+    e.y = std::clamp(e.y, 0.0f, win_h - e.size);
+}
+
 inline void resolve_collision(Entity& a, Entity& b) {
     const float ox = std::fmin(a.x + a.size, b.x + b.size) - std::fmax(a.x, b.x);
     const float oy = std::fmin(a.y + a.size, b.y + b.size) - std::fmax(a.y, b.y);

@@ -57,6 +57,18 @@ pub fn move_hero(e: &mut Entity, dt: f32, win_w: f32, win_h: f32) {
     e.y = e.y.clamp(0.0, win_h - e.size);
 }
 
+pub fn point_in_entity(e: &Entity, px: f32, py: f32) -> bool {
+    px >= e.x && px <= e.x + e.size && py >= e.y && py <= e.y + e.size
+}
+
+pub fn drag_hero(e: &mut Entity, px: f32, py: f32, off_x: f32, off_y: f32, win_w: f32, win_h: f32) {
+    e.x = px - off_x;
+    e.y = py - off_y;
+
+    e.x = e.x.clamp(0.0, win_w - e.size);
+    e.y = e.y.clamp(0.0, win_h - e.size);
+}
+
 pub fn resolve_collision(a: &mut Entity, b: &mut Entity) {
     let ox = (a.x + a.size).min(b.x + b.size) - a.x.max(b.x);
     let oy = (a.y + a.size).min(b.y + b.size) - a.y.max(b.y);

@@ -1,5 +1,4 @@
 #include <SDL3/SDL.h>
-#include <print>
 
 #include "game/entity.hpp"
 #include "input/input.hpp"
@@ -37,6 +36,10 @@ int main() {
     FrameGraph graph;
     bool applied_vsync = false;
 
+    bool dragging = false;
+    float drag_off_x = 0;
+    float drag_off_y = 0;
+
     Uint64 last = SDL_GetTicks();
     while (!input.quit) {
         const Uint64 now = SDL_GetTicks();
@@ -46,16 +49,29 @@ int main() {
         frame_graph_push(graph, dt);
         process_events(input);
 
+        if (input.mouse_clicked && point_in_entity(hero, input.mouse_x, input.mouse_y)) {
+            dragging = true;
+            drag_off_x = input.mouse_x - hero.x;
+            drag_off_y = input.mouse_y - hero.y;
+        }
+        if (!input.mouse_down) dragging = false;
+
         hero.vx = 0;
         hero.vy = 0;
-        if (input.left) hero.vx -= HERO_SPEED;
-        if (input.right) hero.vx += HERO_SPEED;
-        if (input.up) hero.vy -= HERO_SPEED;
-        if (input.down) hero.vy += HERO_SPEED;
+        if (!dragging) {
+            if (input.left) hero.vx -= HERO_SPEED;
+            if (input.right) hero.vx += HERO_SPEED;
+            if (input.up) hero.vy -= HERO_SPEED;
+            if (input.down) hero.vy += HERO_SPEED;
+        }
 
         simulate(player, dt, input.win_w, input.win_h);
         simulate(player2, dt, input.win_w, input.win_h);
-        move_hero(hero, dt, input.win_w, input.win_h);
+        if (dragging) {
+            drag_hero(hero, input.mouse_x, input.mouse_y, drag_off_x, drag_off_y, input.win_w, input.win_h);
+        } else {
+            move_hero(hero, dt, input.win_w, input.win_h);
+        }
 
         resolve_collision(player, player2);
         resolve_collision(player, hero);

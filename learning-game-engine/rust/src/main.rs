@@ -5,7 +5,7 @@ mod ui;
 
 use sdl3::pixels::Color as SdlColor;
 
-use game::{draw_entity, move_hero, resolve_collision, simulate, Color, Entity};
+use game::{drag_hero, draw_entity, move_hero, point_in_entity, resolve_collision, simulate, Color, Entity};
 use input::{process_events, Input};
 use platform::App;
 use ui::components::graph::{draw_frame_graph, frame_graph_push, FrameGraph};
@@ -86,6 +86,10 @@ fn main() {
     let mut graph = FrameGraph::default();
     let mut applied_vsync = false;
 
+    let mut dragging = false;
+    let mut drag_off_x = 0.0;
+    let mut drag_off_y = 0.0;
+
     let mut last = sdl3::timer::ticks();
     while !input.quit {
         let now = sdl3::timer::ticks();
@@ -95,24 +99,39 @@ fn main() {
         frame_graph_push(&mut graph, dt);
         process_events(&mut input, &mut event_pump);
 
+        if input.mouse_clicked && point_in_entity(&hero, input.mouse_x, input.mouse_y) {
+            dragging = true;
+            drag_off_x = input.mouse_x - hero.x;
+            drag_off_y = input.mouse_y - hero.y;
+        }
+        if !input.mouse_down {
+            dragging = false;
+        }
+
         hero.vx = 0.0;
         hero.vy = 0.0;
-        if input.left {
-            hero.vx -= HERO_SPEED;
-        }
-        if input.right {
-            hero.vx += HERO_SPEED;
-        }
-        if input.up {
-            hero.vy -= HERO_SPEED;
-        }
-        if input.down {
-            hero.vy += HERO_SPEED;
+        if !dragging {
+            if input.left {
+                hero.vx -= HERO_SPEED;
+            }
+            if input.right {
+                hero.vx += HERO_SPEED;
+            }
+            if input.up {
+                hero.vy -= HERO_SPEED;
+            }
+            if input.down {
+                hero.vy += HERO_SPEED;
+            }
         }
 
         simulate(&mut player, dt, input.win_w, input.win_h);
         simulate(&mut player2, dt, input.win_w, input.win_h);
-        move_hero(&mut hero, dt, input.win_w, input.win_h);
+        if dragging {
+            drag_hero(&mut hero, input.mouse_x, input.mouse_y, drag_off_x, drag_off_y, input.win_w, input.win_h);
+        } else {
+            move_hero(&mut hero, dt, input.win_w, input.win_h);
+        }
 
         resolve_collision(&mut player, &mut player2);
         resolve_collision(&mut player, &mut hero);

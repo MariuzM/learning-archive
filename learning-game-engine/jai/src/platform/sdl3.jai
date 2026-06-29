@@ -9,7 +9,9 @@ SDL_EVENT_QUIT              :: 0x100;
 SDL_EVENT_KEY_DOWN          :: 0x300;
 SDL_EVENT_KEY_UP            :: 0x301;
 SDL_EVENT_WINDOW_RESIZED    :: 0x206;
+SDL_EVENT_MOUSE_MOTION      :: 0x400;
 SDL_EVENT_MOUSE_BUTTON_DOWN :: 0x401;
+SDL_EVENT_MOUSE_BUTTON_UP   :: 0x402;
 SDL_SCANCODE_ESCAPE      	:: 41;
 SDL_SCANCODE_GRAVE       	:: 53;
 SDL_SCANCODE_1           	:: 30;
@@ -73,11 +75,25 @@ SDL_MouseButtonEvent :: struct {
     y:         float;
 }
 
+SDL_MouseMotionEvent :: struct {
+    type:      u32;
+    reserved:  u32;
+    timestamp: u64;
+    windowID:  u32;
+    which:     u32;
+    state:     u32;
+    x:         float;
+    y:         float;
+    xrel:      float;
+    yrel:      float;
+}
+
 SDL_Event :: union {
     type:    u32;
     key:     SDL_KeyboardEvent;
     window:  SDL_WindowEvent;
     button:  SDL_MouseButtonEvent;
+    motion:  SDL_MouseMotionEvent;
     padding: [128] u8;
 }
 
