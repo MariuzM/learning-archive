@@ -65,18 +65,11 @@ pub fn draw_frame_graph(g: &FrameGraph, canvas: &mut WindowCanvas, font: &Font, 
     let start = (g.head + GRAPH_SAMPLES - g.count) % GRAPH_SAMPLES;
     for i in 0..g.count {
         let ms = g.samples[(start + i) % GRAPH_SAMPLES];
-        if ms < min_ms {
-            min_ms = ms;
-        }
-        if ms > max_ms {
-            max_ms = ms;
-        }
+        min_ms = min_ms.min(ms);
+        max_ms = max_ms.max(ms);
         sum += ms;
 
-        let mut frac = ms / GRAPH_MAX_MS;
-        if frac > 1.0 {
-            frac = 1.0;
-        }
+        let frac = (ms / GRAPH_MAX_MS).min(1.0);
         let h = frac * GRAPH_H;
 
         if ms <= MS_60 {

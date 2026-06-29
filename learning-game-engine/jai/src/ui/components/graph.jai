@@ -38,12 +38,11 @@ draw_frame_graph :: (using g: *Frame_Graph, renderer: *SDL_Renderer, font: *TTF_
     for i: 0..count - 1 {
         ms := samples[(start + i) % GRAPH_SAMPLES];
 
-        if ms < min_ms  min_ms = ms;
-        if ms > max_ms  max_ms = ms;
+        min_ms = min(min_ms, ms);
+        max_ms = max(max_ms, ms);
         sum += ms;
 
-        frac := ms / GRAPH_MAX_MS;
-        if frac > 1.0  frac = 1.0;
+        frac := min(ms / GRAPH_MAX_MS, 1.0);
         h := frac * GRAPH_H;
 
         if ms <= MS_60       SDL_SetRenderDrawColor(renderer, 100, 200, 120, 255);

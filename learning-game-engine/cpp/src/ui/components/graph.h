@@ -3,6 +3,7 @@
 #include <SDL3/SDL.h>
 #include <SDL3_ttf/SDL_ttf.h>
 
+#include <algorithm>
 #include <array>
 #include <format>
 #include <print>
@@ -56,12 +57,11 @@ inline void draw_frame_graph(FrameGraph& g, SDL_Renderer* renderer, TTF_Font* fo
     const int start = (g.head - g.count + GRAPH_SAMPLES) % GRAPH_SAMPLES;
     for (int i = 0; i < g.count; i++) {
         const float ms = g.samples[(start + i) % GRAPH_SAMPLES];
-        if (ms < min_ms) min_ms = ms;
-        if (ms > max_ms) max_ms = ms;
+        min_ms = std::min(min_ms, ms);
+        max_ms = std::max(max_ms, ms);
         sum += ms;
 
-        float frac = ms / GRAPH_MAX_MS;
-        if (frac > 1.0f) frac = 1.0f;
+        const float frac = std::min(ms / GRAPH_MAX_MS, 1.0f);
         const float h = frac * GRAPH_H;
 
         if (ms <= MS_60) {
