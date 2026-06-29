@@ -7,3 +7,6 @@ jai/build/
 # C++
 cpp/build/
 cpp/vendor/
+
+# Rust
+rust/target/

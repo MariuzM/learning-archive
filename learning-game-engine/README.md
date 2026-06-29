@@ -1,26 +1,28 @@
 # Learning Game Engine
 
-Building the same tiny game engine two ways — **Jai**, **C++** — one milestone at a time. The goal
-is to learn engine fundamentals (the game loop, rendering, input, entities, collision) while feeling
-how each language structures the same code.
+Building the same tiny game engine three ways — **Jai**, **C++**, **Rust** — one milestone at a
+time. The goal is to learn engine fundamentals (the game loop, rendering, input, entities,
+collision) while feeling how each language structures the same code.
 
 ## Substrate per language
 
-Both drive **SDL3** so the comparison stays apples-to-apples — same window, same renderer (Metal on
-macOS), same event model — and the interesting differences are purely in how each language
+All three drive **SDL3** so the comparison stays apples-to-apples — same window, same renderer
+(Metal on macOS), same event model — and the interesting differences are purely in how each language
 structures the code and binds to C:
 
 | Language | SDL3 binding                                          | External deps  |
 | -------- | ----------------------------------------------------- | -------------- |
 | Jai      | hand-written `#foreign` bindings (`jai/src/sdl3.jai`) | SDL3, SDL3_ttf |
 | C++      | `#include <SDL3/SDL.h>`                               | SDL3, SDL3_ttf |
+| Rust     | `sdl3` crate (safe wrapper over `sdl3-sys`)           | SDL3, SDL3_ttf |
 
 Jai originally used its built-in `Window_Creation` + `Simp` + `Input` modules (no external deps),
 but `Simp` only has an OpenGL backend on macOS — deprecated and measurably slower than SDL's Metal
 renderer. The `Simp` version lives in git history if you want to compare.
 
-Both render the on-screen FPS counter with **SDL3_ttf** from the shared `assets/Karla-Regular.ttf`
-(SIL OFL), so the text looks identical everywhere.
+All three render the on-screen FPS counter with **SDL3_ttf** from the shared
+`assets/Karla-Regular.ttf` (SIL OFL), so the text looks identical everywhere. The Rust build links
+the same Homebrew SDL3/SDL3_ttf via `pkg-config`.
 
 ## Milestones
 
@@ -38,16 +40,17 @@ of moving sprites. 5. **Collision + a playable thing** — Pong or Breakout.
 From the repo root, build & launch any engine with the `run.sh` helper:
 
 ```sh
-./run.sh jai    # build & run the Jai engine
-./run.sh cpp    # build & run the C++ engine
+./run.sh jai     # build & run the Jai engine
+./run.sh cpp     # build & run the C++ engine
+./run.sh rust    # build & run the Rust engine
 ```
 
 ## Status
 
-| Milestone        | Jai | C++ |
-| ---------------- | --- | --- |
-| 1. Window + loop | ✅  | ✅  |
-| 2. Sprites       | ⬜  | ⬜  |
-| 3. Input + move  | ⬜  | ⬜  |
-| 4. Entities      | ⬜  | ⬜  |
-| 5. Collision     | ⬜  | ⬜  |
+| Milestone        | Jai | C++ | Rust |
+| ---------------- | --- | --- | ---- |
+| 1. Window + loop | ✅  | ✅  | ✅   |
+| 2. Sprites       | ⬜  | ⬜  | ⬜   |
+| 3. Input + move  | ⬜  | ⬜  | ⬜   |
+| 4. Entities      | ⬜  | ⬜  | ⬜   |
+| 5. Collision     | ⬜  | ⬜  | ⬜   |
