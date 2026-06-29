@@ -1,11 +1,11 @@
 #include <SDL3/SDL.h>
 
-#include "game/entity.hpp"
-#include "input/input.hpp"
-#include "platform/platform.hpp"
-#include "ui/components/graph.hpp"
-#include "ui/fps.hpp"
-#include "ui/ui.hpp"
+#include "game/entity.h"
+#include "input/input.h"
+#include "platform/platform.h"
+#include "ui/components/graph.h"
+#include "ui/fps.h"
+#include "ui/ui.h"
 
 static constexpr float WIDTH = 960;
 static constexpr float HEIGHT = 540;

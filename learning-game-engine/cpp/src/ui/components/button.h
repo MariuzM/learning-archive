@@ -6,8 +6,8 @@
 #include <functional>
 #include <string_view>
 
-#include "../../input/input.hpp"
-#include "text.hpp"
+#include "../../input/input.h"
+#include "text.h"
 
 struct Button {
     std::string_view label;

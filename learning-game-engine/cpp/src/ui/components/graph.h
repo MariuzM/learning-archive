@@ -7,7 +7,7 @@
 #include <format>
 #include <print>
 
-#include "text.hpp"
+#include "text.h"
 
 inline constexpr int GRAPH_SAMPLES = 240;
 inline constexpr float GRAPH_X = 8;

@@ -6,8 +6,8 @@
 #include <array>
 #include <string_view>
 
-#include "../input/input.hpp"
-#include "components/button.hpp"
+#include "../input/input.h"
+#include "components/button.h"
 
 inline constexpr std::array FPS_CAPS = {15, 30, 45, 60, 0};
 inline constexpr std::array<std::string_view, 5> FPS_LABELS = {"15", "30", "45", "60", "OFF"};
