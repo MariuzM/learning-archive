@@ -67,6 +67,22 @@ resolve_collision :: (a: *Entity, b: *Entity) {
     }
 }
 
+resolve_static :: (dynamic: *Entity, wall: Entity) {
+    ox := min(dynamic.x + dynamic.size, wall.x + wall.size) - max(dynamic.x, wall.x);
+    oy := min(dynamic.y + dynamic.size, wall.y + wall.size) - max(dynamic.y, wall.y);
+    if ox <= 0 || oy <= 0  return;
+
+    if ox < oy {
+        if dynamic.x < wall.x  dynamic.x -= ox;
+        else                   dynamic.x += ox;
+        dynamic.vx = 0;
+    } else {
+        if dynamic.y < wall.y  dynamic.y -= oy;
+        else                   dynamic.y += oy;
+        dynamic.vy = 0;
+    }
+}
+
 draw_entity :: (renderer: *SDL_Renderer, e: Entity) {
     SDL_SetRenderDrawColor(renderer, e.color.r, e.color.g, e.color.b, e.color.a);
     rect := SDL_FRect.{e.x, e.y, e.size, e.size};

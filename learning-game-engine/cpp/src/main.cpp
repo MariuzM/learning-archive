@@ -1,6 +1,7 @@
 #include <SDL3/SDL.h>
 
 #include "game/entity.h"
+#include "game/light.h"
 #include "game/sprite.h"
 #include "input/input.h"
 #include "platform/platform.h"
@@ -24,6 +25,10 @@ int main() {
     Entity player2{500, 300, -180, 200, BOX_SIZE, {242, 140, 64, 255}};
     Entity ghost{200, 400, 150, -90, BOX_SIZE, {200, 80, 200, 255}};
     Entity hero{440, 230, 0, 0, BOX_SIZE, {90, 200, 120, 120}};
+
+    Entity box1{240, 130, 0, 0, BOX_SIZE, {110, 110, 120, 255}};
+    Entity box2{620, 330, 0, 0, BOX_SIZE, {110, 110, 120, 255}};
+
     FpsCounter fps;
     if (!fps.init("../assets/Karla-Regular.ttf", app.scale)) {
         SDL_Log("Font load failed: %s", SDL_GetError());
@@ -84,6 +89,9 @@ int main() {
         resolve_collision(player, hero);
         resolve_collision(player2, hero);
 
+        resolve_static(hero, box1);
+        resolve_static(hero, box2);
+
         clamp_bounds(player, input.win_w, input.win_h);
         clamp_bounds(player2, input.win_w, input.win_h);
         clamp_bounds(hero, input.win_w, input.win_h);
@@ -93,6 +101,18 @@ int main() {
         draw_entity(app.renderer, player);
         draw_entity(app.renderer, player2);
         draw_entity(app.renderer, ghost);
+        draw_entity(app.renderer, box1);
+        draw_entity(app.renderer, box2);
+
+        const float hero_cx = hero.x + hero.size * 0.5f;
+        const float hero_cy = hero.y + hero.size * 0.5f;
+        const SDL_FColor shadow{26.0f / 255, 26.0f / 255, 31.0f / 255, 1};
+        draw_light(app.renderer, hero_cx, hero_cy, 320, {1.0f, 0.95f, 0.8f, 0.65f});
+        cast_shadow(app.renderer, hero_cx, hero_cy, box1, shadow);
+        cast_shadow(app.renderer, hero_cx, hero_cy, box2, shadow);
+        draw_entity(app.renderer, box1);
+        draw_entity(app.renderer, box2);
+
         if (hero_sprite) {
             draw_sprite(app.renderer, hero_sprite, hero);
         } else {

@@ -37,8 +37,22 @@ SDL_FRect :: struct {
     x, y, w, h: float;
 }
 
+SDL_FPoint :: struct {
+    x, y: float;
+}
+
 SDL_Color :: struct {
     r, g, b, a: u8;
+}
+
+SDL_FColor :: struct {
+    r, g, b, a: float;
+}
+
+SDL_Vertex :: struct {
+    position:  SDL_FPoint;
+    color:     SDL_FColor;
+    tex_coord: SDL_FPoint;
 }
 
 SDL_KeyboardEvent :: struct {
@@ -120,6 +134,7 @@ SDL_RenderFillRect     :: (renderer: *SDL_Renderer, rect: *SDL_FRect) -> bool #f
 SDL_RenderRect         :: (renderer: *SDL_Renderer, rect: *SDL_FRect) -> bool #foreign SDL3;
 SDL_RenderPresent      :: (renderer: *SDL_Renderer) -> bool #foreign SDL3;
 SDL_RenderTexture      :: (renderer: *SDL_Renderer, texture: *SDL_Texture, srcrect: *SDL_FRect, dstrect: *SDL_FRect) -> bool #foreign SDL3;
+SDL_RenderGeometry     :: (renderer: *SDL_Renderer, texture: *SDL_Texture, vertices: *SDL_Vertex, num_vertices: s32, indices: *s32, num_indices: s32) -> bool #foreign SDL3;
 SDL_CreateTextureFromSurface :: (renderer: *SDL_Renderer, surface: *SDL_Surface) -> *SDL_Texture #foreign SDL3;
 SDL_SetTextureBlendMode :: (texture: *SDL_Texture, blendMode: u32) -> bool #foreign SDL3;
 SDL_LoadBMP            :: (file: *u8) -> *SDL_Surface #foreign SDL3;

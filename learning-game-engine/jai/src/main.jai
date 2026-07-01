@@ -10,6 +10,7 @@
 #load "ui/ui.jai";
 #load "game/entity.jai";
 #load "game/sprite.jai";
+#load "game/light.jai";
 #load "ui/fps.jai";
 
 WIDTH      :: 960.0;
@@ -26,6 +27,9 @@ main :: () {
     player2 := Entity.{500, 300, -180, 200, BOX_SIZE, .{242, 140,  64, 255}};
     ghost   := Entity.{200, 400,  150, -90, BOX_SIZE, .{200,  80, 200, 255}};
     hero    := Entity.{440, 230,    0,   0, BOX_SIZE, .{ 90, 200, 120, 120}};
+
+    box1 := Entity.{240, 130, 0, 0, BOX_SIZE, .{110, 110, 120, 255}};
+    box2 := Entity.{620, 330, 0, 0, BOX_SIZE, .{110, 110, 120, 255}};
 
     fps: Fps_Counter;
     if !init_fps(*fps, "../assets/Karla-Regular.ttf", app.scale) {
@@ -87,6 +91,9 @@ main :: () {
         resolve_collision(*player,  *hero);
         resolve_collision(*player2, *hero);
 
+        resolve_static(*hero, box1);
+        resolve_static(*hero, box2);
+
         clamp_bounds(*player,  input.win_w, input.win_h);
         clamp_bounds(*player2, input.win_w, input.win_h);
         clamp_bounds(*hero,    input.win_w, input.win_h);
@@ -96,6 +103,18 @@ main :: () {
         draw_entity(app.renderer, player);
         draw_entity(app.renderer, player2);
         draw_entity(app.renderer, ghost);
+        draw_entity(app.renderer, box1);
+        draw_entity(app.renderer, box2);
+
+        hero_cx := hero.x + hero.size * 0.5;
+        hero_cy := hero.y + hero.size * 0.5;
+        shadow  := SDL_FColor.{26.0 / 255, 26.0 / 255, 31.0 / 255, 1};
+        draw_light(app.renderer, hero_cx, hero_cy, 320, .{1.0, 0.95, 0.8, 0.65});
+        cast_shadow(app.renderer, hero_cx, hero_cy, box1, shadow);
+        cast_shadow(app.renderer, hero_cx, hero_cy, box2, shadow);
+        draw_entity(app.renderer, box1);
+        draw_entity(app.renderer, box2);
+
         if hero_sprite  draw_sprite(app.renderer, hero_sprite, hero);
         else            draw_entity(app.renderer, hero);
         

@@ -4,9 +4,11 @@ mod platform;
 mod ui;
 
 use sdl3::pixels::Color as SdlColor;
+use sdl3::pixels::FColor;
 
+use game::light::{cast_shadow, draw_light};
 use game::sprite::{draw_sprite, load_sprite};
-use game::{clamp_bounds, drag_hero, draw_entity, move_hero, point_in_entity, resolve_collision, simulate, Color, Entity};
+use game::{clamp_bounds, drag_hero, draw_entity, move_hero, point_in_entity, resolve_collision, resolve_static, simulate, Color, Entity};
 use input::{process_events, Input};
 use platform::App;
 use ui::components::graph::{draw_frame_graph, frame_graph_push, FrameGraph};
@@ -85,6 +87,33 @@ fn main() {
         },
     };
 
+    let box1 = Entity {
+        x: 240.0,
+        y: 130.0,
+        vx: 0.0,
+        vy: 0.0,
+        size: BOX_SIZE,
+        color: Color {
+            r: 110,
+            g: 110,
+            b: 120,
+            a: 255,
+        },
+    };
+    let box2 = Entity {
+        x: 620.0,
+        y: 330.0,
+        vx: 0.0,
+        vy: 0.0,
+        size: BOX_SIZE,
+        color: Color {
+            r: 110,
+            g: 110,
+            b: 120,
+            a: 255,
+        },
+    };
+
     let mut fps = match FpsCounter::init(&ttf, "../assets/Karla-Regular.ttf", app.scale) {
         Ok(fps) => fps,
         Err(e) => {
@@ -157,6 +186,9 @@ fn main() {
         resolve_collision(&mut player, &mut hero);
         resolve_collision(&mut player2, &mut hero);
 
+        resolve_static(&mut hero, &box1);
+        resolve_static(&mut hero, &box2);
+
         clamp_bounds(&mut player, input.win_w, input.win_h);
         clamp_bounds(&mut player2, input.win_w, input.win_h);
         clamp_bounds(&mut hero, input.win_w, input.win_h);
@@ -166,6 +198,18 @@ fn main() {
         draw_entity(&mut app.canvas, &player);
         draw_entity(&mut app.canvas, &player2);
         draw_entity(&mut app.canvas, &ghost);
+        draw_entity(&mut app.canvas, &box1);
+        draw_entity(&mut app.canvas, &box2);
+
+        let hero_cx = hero.x + hero.size * 0.5;
+        let hero_cy = hero.y + hero.size * 0.5;
+        let shadow = FColor::RGBA(26.0 / 255.0, 26.0 / 255.0, 31.0 / 255.0, 1.0);
+        draw_light(&mut app.canvas, hero_cx, hero_cy, 320.0, FColor::RGBA(1.0, 0.95, 0.8, 0.65));
+        cast_shadow(&mut app.canvas, hero_cx, hero_cy, &box1, shadow);
+        cast_shadow(&mut app.canvas, hero_cx, hero_cy, &box2, shadow);
+        draw_entity(&mut app.canvas, &box1);
+        draw_entity(&mut app.canvas, &box2);
+
         match &hero_sprite {
             Some(tex) => draw_sprite(&mut app.canvas, tex, &hero),
             None => draw_entity(&mut app.canvas, &hero),

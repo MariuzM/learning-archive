@@ -96,6 +96,28 @@ inline void resolve_collision(Entity& a, Entity& b) {
     }
 }
 
+inline void resolve_static(Entity& dynamic, const Entity& wall) {
+    const float ox = std::fmin(dynamic.x + dynamic.size, wall.x + wall.size) - std::fmax(dynamic.x, wall.x);
+    const float oy = std::fmin(dynamic.y + dynamic.size, wall.y + wall.size) - std::fmax(dynamic.y, wall.y);
+    if (ox <= 0 || oy <= 0) return;
+
+    if (ox < oy) {
+        if (dynamic.x < wall.x) {
+            dynamic.x -= ox;
+        } else {
+            dynamic.x += ox;
+        }
+        dynamic.vx = 0;
+    } else {
+        if (dynamic.y < wall.y) {
+            dynamic.y -= oy;
+        } else {
+            dynamic.y += oy;
+        }
+        dynamic.vy = 0;
+    }
+}
+
 inline void draw_entity(SDL_Renderer* renderer, const Entity& e) {
     SDL_SetRenderDrawColor(renderer, e.color.r, e.color.g, e.color.b, e.color.a);
     SDL_FRect rect{e.x, e.y, e.size, e.size};

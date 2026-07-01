@@ -1,3 +1,4 @@
+pub mod light;
 pub mod sprite;
 
 use sdl3::pixels::Color as SdlColor;
@@ -105,6 +106,30 @@ pub fn resolve_collision(a: &mut Entity, b: &mut Entity) {
         }
         a.vy = -a.vy;
         b.vy = -b.vy;
+    }
+}
+
+pub fn resolve_static(dynamic: &mut Entity, wall: &Entity) {
+    let ox = (dynamic.x + dynamic.size).min(wall.x + wall.size) - dynamic.x.max(wall.x);
+    let oy = (dynamic.y + dynamic.size).min(wall.y + wall.size) - dynamic.y.max(wall.y);
+    if ox <= 0.0 || oy <= 0.0 {
+        return;
+    }
+
+    if ox < oy {
+        if dynamic.x < wall.x {
+            dynamic.x -= ox;
+        } else {
+            dynamic.x += ox;
+        }
+        dynamic.vx = 0.0;
+    } else {
+        if dynamic.y < wall.y {
+            dynamic.y -= oy;
+        } else {
+            dynamic.y += oy;
+        }
+        dynamic.vy = 0.0;
     }
 }
 
