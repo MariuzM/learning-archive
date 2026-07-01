@@ -1,31 +1,4 @@
-pub mod light;
-pub mod sprite;
-
-use sdl3::pixels::Color as SdlColor;
-use sdl3::render::{FRect, WindowCanvas};
-
-#[derive(Clone, Copy)]
-pub struct Color {
-    pub r: u8,
-    pub g: u8,
-    pub b: u8,
-    pub a: u8,
-}
-
-impl Color {
-    pub fn sdl(self) -> SdlColor {
-        SdlColor::RGBA(self.r, self.g, self.b, self.a)
-    }
-}
-
-pub struct Entity {
-    pub x: f32,
-    pub y: f32,
-    pub vx: f32,
-    pub vy: f32,
-    pub size: f32,
-    pub color: Color,
-}
+use crate::entity::Entity;
 
 pub fn simulate(e: &mut Entity, dt: f32, win_w: f32, win_h: f32) {
     e.x += e.vx * dt;
@@ -131,9 +104,4 @@ pub fn resolve_static(dynamic: &mut Entity, wall: &Entity) {
         }
         dynamic.vy = 0.0;
     }
-}
-
-pub fn draw_entity(canvas: &mut WindowCanvas, e: &Entity) {
-    canvas.set_draw_color(e.color.sdl());
-    let _ = canvas.fill_rect(FRect::new(e.x, e.y, e.size, e.size));
 }

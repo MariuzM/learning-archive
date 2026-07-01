@@ -1,20 +1,9 @@
 #pragma once
 
-#include <SDL3/SDL.h>
-
 #include <algorithm>
 #include <cmath>
 
-struct Color {
-    Uint8 r, g, b, a;
-};
-
-struct Entity {
-    float x, y;
-    float vx, vy;
-    float size;
-    Color color;
-};
+#include "entity.h"
 
 inline void simulate(Entity& e, float dt, float win_w, float win_h) {
     e.x += e.vx * dt;
@@ -116,10 +105,4 @@ inline void resolve_static(Entity& dynamic, const Entity& wall) {
         }
         dynamic.vy = 0;
     }
-}
-
-inline void draw_entity(SDL_Renderer* renderer, const Entity& e) {
-    SDL_SetRenderDrawColor(renderer, e.color.r, e.color.g, e.color.b, e.color.a);
-    SDL_FRect rect{e.x, e.y, e.size, e.size};
-    SDL_RenderFillRect(renderer, &rect);
 }

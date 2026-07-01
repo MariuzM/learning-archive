@@ -24,6 +24,27 @@ All three render the on-screen FPS counter with **SDL3_ttf** from the shared
 `assets/Karla-Regular.ttf` (SIL OFL), so the text looks identical everywhere. The Rust build links
 the same Homebrew SDL3/SDL3_ttf via `pkg-config`.
 
+## Code layout
+
+All three implementations share the same module layout so the comparison stays structural, not
+architectural:
+
+```
+src/
+  main            entry point: init + the frame loop only
+  platform/       App — window, renderer, vsync (Jai also has raw sdl3 bindings here)
+  input/          Input state + event polling
+  entity          Entity + Color data (a `solid` flag drives collision opt-in)
+  physics         simulate, collision resolution, bounds/clamp, hero move/drag
+  render/         draw_entity, sprite, light + shadows
+  scene/          World — owns the entity collections + hero, exposes update(dt)/render()
+  ui/             fps counter, debug overlay, components/ (button, graph, text)
+```
+
+Gameplay objects live in a `World`: `movers` (bouncing entities) and `walls` (static, unpushable
+boxes) are collections rather than named locals, so growing to hundreds of entities is adding to a
+list, not editing the loop. `main` just steps `world.update` and `world.render` each frame.
+
 ## Milestones
 
 1. **Window + game loop** — open a _resizable_ window, run a delta-timed loop, clear the screen,

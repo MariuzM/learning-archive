@@ -5,7 +5,7 @@
 #include <array>
 #include <cmath>
 
-#include "entity.h"
+#include "../entity.h"
 
 inline constexpr int LIGHT_SEGMENTS = 64;
 inline constexpr float SHADOW_DIST = 3000.0f;

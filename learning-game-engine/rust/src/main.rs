@@ -1,24 +1,23 @@
-mod game;
+mod entity;
 mod input;
+mod physics;
 mod platform;
+mod render;
+mod scene;
 mod ui;
 
 use sdl3::pixels::Color as SdlColor;
-use sdl3::pixels::FColor;
 
-use game::light::{cast_shadow, draw_light};
-use game::sprite::{draw_sprite, load_sprite};
-use game::{clamp_bounds, drag_hero, draw_entity, move_hero, point_in_entity, resolve_collision, resolve_static, simulate, Color, Entity};
 use input::{process_events, Input};
 use platform::App;
+use render::sprite::load_sprite;
+use scene::World;
 use ui::components::graph::{draw_frame_graph, frame_graph_push, FrameGraph};
 use ui::draw_debug;
 use ui::fps::FpsCounter;
 
 const WIDTH: u32 = 960;
 const HEIGHT: u32 = 540;
-const BOX_SIZE: f32 = 80.0;
-const HERO_SPEED: f32 = 320.0;
 
 fn main() {
     let sdl = sdl3::init().expect("SDL_Init failed");
@@ -34,85 +33,7 @@ fn main() {
 
     let mut event_pump = sdl.event_pump().expect("event_pump failed");
 
-    let mut player = Entity {
-        x: 100.0,
-        y: 100.0,
-        vx: 220.0,
-        vy: 170.0,
-        size: BOX_SIZE,
-        color: Color {
-            r: 77,
-            g: 166,
-            b: 242,
-            a: 255,
-        },
-    };
-    let mut player2 = Entity {
-        x: 500.0,
-        y: 300.0,
-        vx: -180.0,
-        vy: 200.0,
-        size: BOX_SIZE,
-        color: Color {
-            r: 242,
-            g: 140,
-            b: 64,
-            a: 255,
-        },
-    };
-    let mut ghost = Entity {
-        x: 200.0,
-        y: 400.0,
-        vx: 150.0,
-        vy: -90.0,
-        size: BOX_SIZE,
-        color: Color {
-            r: 200,
-            g: 80,
-            b: 200,
-            a: 255,
-        },
-    };
-    let mut hero = Entity {
-        x: 440.0,
-        y: 230.0,
-        vx: 0.0,
-        vy: 0.0,
-        size: BOX_SIZE,
-        color: Color {
-            r: 90,
-            g: 200,
-            b: 120,
-            a: 120,
-        },
-    };
-
-    let box1 = Entity {
-        x: 240.0,
-        y: 130.0,
-        vx: 0.0,
-        vy: 0.0,
-        size: BOX_SIZE,
-        color: Color {
-            r: 110,
-            g: 110,
-            b: 120,
-            a: 255,
-        },
-    };
-    let box2 = Entity {
-        x: 620.0,
-        y: 330.0,
-        vx: 0.0,
-        vy: 0.0,
-        size: BOX_SIZE,
-        color: Color {
-            r: 110,
-            g: 110,
-            b: 120,
-            a: 255,
-        },
-    };
+    let mut world = World::new();
 
     let mut fps = match FpsCounter::init(&ttf, "../assets/Karla-Regular.ttf", app.scale) {
         Ok(fps) => fps,
@@ -132,10 +53,6 @@ fn main() {
     let mut graph = FrameGraph::default();
     let mut applied_vsync = false;
 
-    let mut dragging = false;
-    let mut drag_off_x = 0.0;
-    let mut drag_off_y = 0.0;
-
     let mut last = sdl3::timer::ticks();
     while !input.quit {
         let now = sdl3::timer::ticks();
@@ -145,75 +62,11 @@ fn main() {
         frame_graph_push(&mut graph, dt);
         process_events(&mut input, &mut event_pump);
 
-        if input.mouse_clicked && point_in_entity(&hero, input.mouse_x, input.mouse_y) {
-            dragging = true;
-            drag_off_x = input.mouse_x - hero.x;
-            drag_off_y = input.mouse_y - hero.y;
-        }
-        if !input.mouse_down {
-            dragging = false;
-        }
-
-        hero.vx = 0.0;
-        hero.vy = 0.0;
-        if !dragging {
-            if input.left {
-                hero.vx -= HERO_SPEED;
-            }
-            if input.right {
-                hero.vx += HERO_SPEED;
-            }
-            if input.up {
-                hero.vy -= HERO_SPEED;
-            }
-            if input.down {
-                hero.vy += HERO_SPEED;
-            }
-        }
-
-        if !input.paused {
-            simulate(&mut player, dt, input.win_w, input.win_h);
-            simulate(&mut player2, dt, input.win_w, input.win_h);
-            simulate(&mut ghost, dt, input.win_w, input.win_h);
-        }
-        if dragging {
-            drag_hero(&mut hero, input.mouse_x, input.mouse_y, drag_off_x, drag_off_y, input.win_w, input.win_h);
-        } else {
-            move_hero(&mut hero, dt, input.win_w, input.win_h);
-        }
-
-        resolve_collision(&mut player, &mut player2);
-        resolve_collision(&mut player, &mut hero);
-        resolve_collision(&mut player2, &mut hero);
-
-        resolve_static(&mut hero, &box1);
-        resolve_static(&mut hero, &box2);
-
-        clamp_bounds(&mut player, input.win_w, input.win_h);
-        clamp_bounds(&mut player2, input.win_w, input.win_h);
-        clamp_bounds(&mut hero, input.win_w, input.win_h);
+        world.update(&input, dt);
 
         app.canvas.set_draw_color(SdlColor::RGBA(26, 26, 31, 255));
         app.canvas.clear();
-        draw_entity(&mut app.canvas, &player);
-        draw_entity(&mut app.canvas, &player2);
-        draw_entity(&mut app.canvas, &ghost);
-        draw_entity(&mut app.canvas, &box1);
-        draw_entity(&mut app.canvas, &box2);
-
-        let hero_cx = hero.x + hero.size * 0.5;
-        let hero_cy = hero.y + hero.size * 0.5;
-        let shadow = FColor::RGBA(26.0 / 255.0, 26.0 / 255.0, 31.0 / 255.0, 1.0);
-        draw_light(&mut app.canvas, hero_cx, hero_cy, 320.0, FColor::RGBA(1.0, 0.95, 0.8, 0.65));
-        cast_shadow(&mut app.canvas, hero_cx, hero_cy, &box1, shadow);
-        cast_shadow(&mut app.canvas, hero_cx, hero_cy, &box2, shadow);
-        draw_entity(&mut app.canvas, &box1);
-        draw_entity(&mut app.canvas, &box2);
-
-        match &hero_sprite {
-            Some(tex) => draw_sprite(&mut app.canvas, tex, &hero),
-            None => draw_entity(&mut app.canvas, &hero),
-        }
+        world.render(&mut app.canvas, hero_sprite.as_ref());
 
         if input.show_fps {
             fps.draw(&mut app.canvas, dt);

@@ -1,14 +1,3 @@
-Color :: struct {
-    r, g, b, a: u8;
-}
-
-Entity :: struct {
-    x, y:   float;
-    vx, vy: float;
-    size:   float;
-    color:  Color;
-}
-
 simulate :: (e: *Entity, dt: float, win_w: float, win_h: float) {
     e.x += e.vx * dt;
     e.y += e.vy * dt;
@@ -81,10 +70,4 @@ resolve_static :: (dynamic: *Entity, wall: Entity) {
         else                   dynamic.y += oy;
         dynamic.vy = 0;
     }
-}
-
-draw_entity :: (renderer: *SDL_Renderer, e: Entity) {
-    SDL_SetRenderDrawColor(renderer, e.color.r, e.color.g, e.color.b, e.color.a);
-    rect := SDL_FRect.{e.x, e.y, e.size, e.size};
-    SDL_RenderFillRect(renderer, *rect);
 }

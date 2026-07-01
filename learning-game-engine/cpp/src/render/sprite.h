@@ -2,7 +2,7 @@
 
 #include <SDL3/SDL.h>
 
-#include "entity.h"
+#include "../entity.h"
 
 inline SDL_Texture* load_sprite(SDL_Renderer* renderer, const char* path) {
     SDL_Surface* surf = SDL_LoadBMP(path);

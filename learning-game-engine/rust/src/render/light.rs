@@ -1,7 +1,7 @@
 use sdl3::pixels::FColor;
 use sdl3::render::{FPoint, Vertex, WindowCanvas};
 
-use super::Entity;
+use crate::entity::Entity;
 
 const LIGHT_SEGMENTS: usize = 64;
 const SHADOW_DIST: f32 = 3000.0;
